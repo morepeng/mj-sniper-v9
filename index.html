@@ -772,155 +772,200 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 /* ── 手機直式主佈局 ── */
 @media screen and (max-width: 768px) {
 
-  /* App 改為單欄垂直佈局 */
+  /* ── 防止橫向溢出 ── */
+  html, body {
+    overflow-x: hidden !important;
+    width: 100% !important;
+    max-width: 100vw !important;
+  }
+
+  /* ── App 單欄垂直佈局 ── */
   .app {
-    grid-template-columns: 1fr !important;
-    grid-template-rows: 52px 1fr 56px !important;
+    display: grid !important;
+    grid-template-columns: 100vw !important;
+    grid-template-rows: 48px 1fr 56px !important;
     height: 100dvh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+    position: fixed !important;
+    top: 0; left: 0;
   }
 
-  /* Topbar 縮緊 */
+  /* ── Topbar 精簡 ── */
   .topbar {
+    width: 100vw !important;
+    overflow: hidden !important;
     padding-bottom: 0 !important;
-    overflow: visible !important;
+    flex-wrap: nowrap !important;
   }
-  .brand { padding: 0 8px !important; border-right: none !important; }
-  .brand-logo { font-size: .85rem !important; }
-  .brand-ver { display: none !important; }
-  .live-dot { width: 6px; height: 6px; }
-
-  /* 搜尋列精簡 */
-  .search-bar {
-    padding: 0 6px !important;
-    gap: 4px !important;
-    flex: 1 !important;
+  .brand {
+    padding: 0 8px !important;
     border-right: none !important;
+    flex-shrink: 0 !important;
+    min-width: 0 !important;
+  }
+  .brand-logo { font-size: .78rem !important; letter-spacing: 0 !important; }
+  .brand-ver  { display: none !important; }
+  .live-dot   { width: 5px !important; height: 5px !important; }
+
+  .search-bar {
+    padding: 0 4px !important;
+    gap: 3px !important;
+    flex: 1 1 auto !important;
+    border-right: none !important;
+    min-width: 0 !important;
+    overflow: hidden !important;
   }
   .ticker-inp {
-    width: 90px !important;
-    font-size: .8rem !important;
-    padding: 4px 7px !important;
+    width: 80px !important;
+    font-size: .78rem !important;
+    padding: 3px 6px !important;
+    flex-shrink: 0 !important;
   }
-  .tf-grp { gap: 2px !important; }
+  .tf-grp { gap: 2px !important; flex-wrap: nowrap !important; }
   .tf-btn, .tk-btn {
-    font-size: .55rem !important;
-    padding: 3px 5px !important;
+    font-size: .52rem !important;
+    padding: 3px 4px !important;
+    flex-shrink: 0 !important;
   }
-  /* 手機上隱藏部分 TF 按鈕，只保留常用 */
+  /* 隱藏次要 TF 按鈕 */
   .tf-btn[data-tf="5m"],
-  .tf-btn[data-tf="15m"] { display: none !important; }
+  .tf-btn[data-tf="15m"],
+  .tf-btn[data-tf="1h"] { display: none !important; }
 
-  /* topbar-stats 精簡（只保留最重要的） */
+  /* topbar-stats 精簡 */
   .topbar-stats {
-    padding: 0 6px !important;
-    gap: 6px !important;
+    display: none !important;
   }
-  .ts-item:nth-child(n+3) { display: none !important; }
-  .ts-label { font-size: .5rem !important; }
-  .ts-val { font-size: .62rem !important; }
 
-  /* 隱藏 PWA 安裝按鈕文字 */
-  #pwaInstallBtn { padding: 3px 6px !important; font-size: .55rem !important; }
+  /* 快速股票按鈕列、提醒按鈕 — 手機隱藏 */
+  .tk-row { display: none !important; }
+  #tkQuickRow { display: none !important; }
+  #bAlertBtn, #sAlertBtn { display: none !important; }
+  /* topbar-stats 整列隱藏 */
+  .topbar-stats { display: none !important; }
 
-  /* ── 左側/右側/圖表 — 手機切換模式 ── */
-  .left, .right, .chart-area {
+  /* 隱藏 PWA 安裝鈕文字 */
+  #pwaInstallBtn { display: none !important; }
+
+  /* api-badge 精簡 */
+  .api-badge { gap: 3px !important; padding: 0 4px !important; }
+  .av { font-size: .52rem !important; }
+
+  /* ── 三欄改為 Tab 切換 ── */
+  .app > aside.left,
+  .app > main.chart-area,
+  .app > aside.right {
     grid-column: 1 !important;
-    width: 100% !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     height: 100% !important;
     overflow-y: auto !important;
+    overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
+    box-sizing: border-box !important;
   }
 
-  /* 預設只顯示圖表，左右側面板隱藏 */
-  .left  { display: none !important; }
-  .right { display: none !important; }
-  .chart-area { display: flex !important; }
+  /* 預設隱藏左右側，只顯示 K線 */
+  .app > aside.left   { display: none !important; }
+  .app > main.chart-area { display: flex !important; }
+  .app > aside.right  { display: none !important; }
 
-  /* 顯示對應 tab 時才顯示 */
-  .left.mob-active   { display: flex !important; }
-  .right.mob-active  { display: flex !important; }
-  .chart-area.mob-active { display: flex !important; }
+  /* Tab 顯示時才顯示 */
+  .app > aside.left.mob-active   { display: flex !important; }
+  .app > main.chart-area.mob-active { display: flex !important; }
+  .app > aside.right.mob-active  { display: flex !important; }
 
-  /* ── 底部 Tab 導航列 ── */
+  /* ── Status bar → Tab bar ── */
+  .statusbar { display: none !important; }
   .mob-tabbar {
     display: flex !important;
+    width: 100vw !important;
+    max-width: 100vw !important;
     grid-column: 1 !important;
-    background: #050c14;
-    border-top: 1px solid #1a3550;
-    height: 56px;
+    grid-row: 3 !important;
+    position: relative !important;
+    z-index: 100 !important;
   }
 
-  /* sec 在手機加大間距 */
-  .sec { padding: 10px 12px !important; }
-  .sec-title { font-size: .72rem !important; }
+  /* ── 各元素寬度限制 ── */
+  .sec {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    padding: 10px 12px !important;
+  }
+  .sec-title { font-size: .7rem !important; }
 
-  /* status-bar 在手機隱藏（底部 tab 取代） */
-  .status-bar { display: none !important; }
+  /* dec-box 全寬 */
+  .dec-box, .dec-wrap {
+    width: 100% !important;
+    box-sizing: border-box !important;
+    max-width: 100% !important;
+  }
 
-  /* 圖表高度調整 */
-  .main-wrap { min-height: 200px !important; }
-  .sub-section { height: 90px !important; }
+  /* 停損面板三格橫排 */
+  .sl-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 6px !important;
+  }
 
-  /* ── 決策框 在手機放大 ── */
-  .dec-box { font-size: .75rem !important; }
+  /* 圖表高度 */
+  .main-wrap { min-height: 180px !important; }
+  .sub-section { height: 80px !important; }
 
-  /* loading 全螢幕 */
-  .loading { font-size: .75rem !important; }
+  /* warn-item */
+  .warn-item {
+    font-size: .66rem !important;
+    word-break: break-word !important;
+  }
 
-  /* warn-item 手機上更易讀 */
-  .warn-item { font-size: .68rem !important; padding: 5px 8px !important; }
+  /* 籌碼圓圈 */
+  .chip-score-circle {
+    width: 50px !important;
+    height: 50px !important;
+    font-size: 1rem !important;
+  }
 
-  /* Chip panel */
-  .chip-score-circle { width: 52px !important; height: 52px !important; font-size: 1.1rem !important; }
+  /* loading 全寬 */
+  .loading-box {
+    width: 90vw !important;
+    max-width: 90vw !important;
+  }
+
+  /* LSTM bars */
+  .lstm-row { font-size: .6rem !important; }
+  .lstm-price { font-size: .6rem !important; }
+
+  /* tech-grid 兩欄 */
+  .tech-grid {
+    grid-template-columns: 1fr 1fr !important;
+  }
+
+  /* lead-item 全寬 */
+  .lead-item { width: 100% !important; }
+
+  /* 地緣面板文字換行 */
+  #geoPanelRow, #rotPanelRow {
+    word-break: break-word !important;
+    font-size: .58rem !important;
+  }
 }
 
-/* ── 底部 Tab 導航（預設桌面隱藏）── */
-.mob-tabbar {
-  display: none;
-  justify-content: space-around;
-  align-items: center;
-}
-.mob-tab {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 12px;
-  cursor: pointer;
-  border: none;
-  background: transparent;
-  color: #5a8aa8;
-  font-size: .52rem;
-  font-family: var(--fb);
-  flex: 1;
-  transition: all .15s;
-  border-top: 2px solid transparent;
-}
-.mob-tab.active {
-  color: #00d4ff;
-  border-top-color: #00d4ff;
-}
-.mob-tab .mob-tab-icon { font-size: 1.2rem; line-height: 1; }
-.mob-tab .mob-tab-lbl  { font-size: .52rem; white-space: nowrap; }
-
-/* ── 手機橫式（landscape）：圖表保持，左側折疊 ── */
+/* ── 手機橫式 ── */
 @media screen and (max-width: 900px) and (orientation: landscape) {
   .app {
-    grid-template-columns: 0px 1fr 220px !important;
-    grid-template-rows: 44px 1fr 24px !important;
+    grid-template-columns: 0 1fr 200px !important;
+    grid-template-rows: 40px 1fr 22px !important;
   }
-  .left { display: none !important; }
-  .right { display: flex !important; width: 220px !important; }
+  .app > aside.left   { display: none !important; }
+  .app > aside.right  { display: flex !important; width: 200px !important; }
   .mob-tabbar { display: none !important; }
-  .status-bar { display: flex !important; }
+  .statusbar  { display: flex !important; }
 }
 
-/* ── 平板（768-1024px）── */
-@media screen and (min-width: 768px) and (max-width: 1024px) {
-  .app {
-    grid-template-columns: 220px 1fr 220px !important;
-  }
-  .sec { padding: 8px 10px !important; }
+/* ── 平板 ── */
+@media screen and (min-width: 769px) and (max-width: 1024px) {
+  .app { grid-template-columns: 210px 1fr 210px !important; }
 }
 </style>
 </head>
@@ -946,7 +991,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
       <button class="tf-btn" data-tf="1wk">週</button>
     </div>
     <button class="btn btn-go" id="goBtn">⚡ 分析</button>
-      <div style="display:flex;gap:3px;margin-left:4px">
+      <div id="tkQuickRow" style="display:flex;gap:3px;margin-left:4px">
         <button class="tk-btn" onclick="quickTk('2330.TW')" title="台積電">台積</button>
         <button class="tk-btn" onclick="quickTk('2317.TW')" title="鴻海">鴻海</button>
         <button class="tk-btn" onclick="quickTk('2454.TW')" title="聯發科">聯發</button>
@@ -7471,12 +7516,11 @@ window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
    📱 手機 Tab 切換系統
    ══════════════════════════════════════════════ */
 function switchMobTab(tab) {
-  // 只在手機直式模式下生效
   if (window.innerWidth > 768) return;
 
-  const left      = document.querySelector('aside.left');
-  const right     = document.querySelector('aside.right');
-  const chartArea = document.querySelector('main.chart-area');
+  const left      = document.querySelector('.app > aside.left');
+  const right     = document.querySelector('.app > aside.right');
+  const chartArea = document.querySelector('.app > main.chart-area');
   const tabs      = document.querySelectorAll('.mob-tab');
 
   // 全部隱藏
@@ -7485,30 +7529,37 @@ function switchMobTab(tab) {
   });
   tabs.forEach(t => t.classList.remove('active'));
 
-  // 顯示對應的
-  if (tab === 'left'  && left)      left.classList.add('mob-active');
-  if (tab === 'right' && right)     right.classList.add('mob-active');
-  if (tab === 'chart' && chartArea) chartArea.classList.add('mob-active');
+  // 顯示對應面板
+  const panels = { left, right, chart: chartArea };
+  const target = panels[tab];
+  if (target) target.classList.add('mob-active');
 
-  // 高亮對應 tab
+  // 高亮 tab 按鈕
   const activeBtn = document.getElementById('tab-' + tab);
   if (activeBtn) activeBtn.classList.add('active');
-
-  // 儲存狀態
   window._mobActiveTab = tab;
 
-  // 切換到圖表時觸發 resize（lightweight-charts 需要）
-  if (tab === 'chart') {
+  // 切換到圖表時強制 resize
+  if (tab === 'chart' && chartArea) {
     setTimeout(() => {
-      if (G.lwMain) G.lwMain.applyOptions({width: chartArea.offsetWidth});
       window.dispatchEvent(new Event('resize'));
-    }, 50);
+      if (G.lwMain) {
+        G.lwMain.applyOptions({ width: chartArea.clientWidth || window.innerWidth });
+      }
+    }, 80);
   }
+  // 切換面板時滾回頂部
+  if (target && tab !== 'chart') target.scrollTop = 0;
 }
 
 // 手機初始化：預設顯示 K線圖
 function initMobileLayout() {
   if (window.innerWidth <= 768) {
+    // 確保只顯示 chart，隱藏其他
+    ['aside.left','main.chart-area','aside.right'].forEach(sel => {
+      const el = document.querySelector('.app > ' + sel);
+      if (el) el.classList.remove('mob-active');
+    });
     switchMobTab('chart');
   }
 }
