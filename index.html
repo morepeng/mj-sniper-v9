@@ -760,6 +760,168 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 .ps-net.bull{color:#00e676}
 .ps-net.bear{color:#ff5252}
 .ps-net.neutral{color:#607d8b}
+
+/* ══════════════════════════════════════════════════════════════
+   📱 手機響應式佈局 — Mobile PWA Layout
+   策略：
+   ① 手機直式（< 768px）：三欄 → 上下堆疊 + 底部 Tab 切換
+   ② 手機橫式（landscape）：左側收起，圖表+右側並排
+   ③ 平板（768-1024px）：縮小左右欄寬
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── 手機直式主佈局 ── */
+@media screen and (max-width: 768px) {
+
+  /* App 改為單欄垂直佈局 */
+  .app {
+    grid-template-columns: 1fr !important;
+    grid-template-rows: 52px 1fr 56px !important;
+    height: 100dvh !important;
+  }
+
+  /* Topbar 縮緊 */
+  .topbar {
+    padding-bottom: 0 !important;
+    overflow: visible !important;
+  }
+  .brand { padding: 0 8px !important; border-right: none !important; }
+  .brand-logo { font-size: .85rem !important; }
+  .brand-ver { display: none !important; }
+  .live-dot { width: 6px; height: 6px; }
+
+  /* 搜尋列精簡 */
+  .search-bar {
+    padding: 0 6px !important;
+    gap: 4px !important;
+    flex: 1 !important;
+    border-right: none !important;
+  }
+  .ticker-inp {
+    width: 90px !important;
+    font-size: .8rem !important;
+    padding: 4px 7px !important;
+  }
+  .tf-grp { gap: 2px !important; }
+  .tf-btn, .tk-btn {
+    font-size: .55rem !important;
+    padding: 3px 5px !important;
+  }
+  /* 手機上隱藏部分 TF 按鈕，只保留常用 */
+  .tf-btn[data-tf="5m"],
+  .tf-btn[data-tf="15m"] { display: none !important; }
+
+  /* topbar-stats 精簡（只保留最重要的） */
+  .topbar-stats {
+    padding: 0 6px !important;
+    gap: 6px !important;
+  }
+  .ts-item:nth-child(n+3) { display: none !important; }
+  .ts-label { font-size: .5rem !important; }
+  .ts-val { font-size: .62rem !important; }
+
+  /* 隱藏 PWA 安裝按鈕文字 */
+  #pwaInstallBtn { padding: 3px 6px !important; font-size: .55rem !important; }
+
+  /* ── 左側/右側/圖表 — 手機切換模式 ── */
+  .left, .right, .chart-area {
+    grid-column: 1 !important;
+    width: 100% !important;
+    height: 100% !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+
+  /* 預設只顯示圖表，左右側面板隱藏 */
+  .left  { display: none !important; }
+  .right { display: none !important; }
+  .chart-area { display: flex !important; }
+
+  /* 顯示對應 tab 時才顯示 */
+  .left.mob-active   { display: flex !important; }
+  .right.mob-active  { display: flex !important; }
+  .chart-area.mob-active { display: flex !important; }
+
+  /* ── 底部 Tab 導航列 ── */
+  .mob-tabbar {
+    display: flex !important;
+    grid-column: 1 !important;
+    background: #050c14;
+    border-top: 1px solid #1a3550;
+    height: 56px;
+  }
+
+  /* sec 在手機加大間距 */
+  .sec { padding: 10px 12px !important; }
+  .sec-title { font-size: .72rem !important; }
+
+  /* status-bar 在手機隱藏（底部 tab 取代） */
+  .status-bar { display: none !important; }
+
+  /* 圖表高度調整 */
+  .main-wrap { min-height: 200px !important; }
+  .sub-section { height: 90px !important; }
+
+  /* ── 決策框 在手機放大 ── */
+  .dec-box { font-size: .75rem !important; }
+
+  /* loading 全螢幕 */
+  .loading { font-size: .75rem !important; }
+
+  /* warn-item 手機上更易讀 */
+  .warn-item { font-size: .68rem !important; padding: 5px 8px !important; }
+
+  /* Chip panel */
+  .chip-score-circle { width: 52px !important; height: 52px !important; font-size: 1.1rem !important; }
+}
+
+/* ── 底部 Tab 導航（預設桌面隱藏）── */
+.mob-tabbar {
+  display: none;
+  justify-content: space-around;
+  align-items: center;
+}
+.mob-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 6px 12px;
+  cursor: pointer;
+  border: none;
+  background: transparent;
+  color: #5a8aa8;
+  font-size: .52rem;
+  font-family: var(--fb);
+  flex: 1;
+  transition: all .15s;
+  border-top: 2px solid transparent;
+}
+.mob-tab.active {
+  color: #00d4ff;
+  border-top-color: #00d4ff;
+}
+.mob-tab .mob-tab-icon { font-size: 1.2rem; line-height: 1; }
+.mob-tab .mob-tab-lbl  { font-size: .52rem; white-space: nowrap; }
+
+/* ── 手機橫式（landscape）：圖表保持，左側折疊 ── */
+@media screen and (max-width: 900px) and (orientation: landscape) {
+  .app {
+    grid-template-columns: 0px 1fr 220px !important;
+    grid-template-rows: 44px 1fr 24px !important;
+  }
+  .left { display: none !important; }
+  .right { display: flex !important; width: 220px !important; }
+  .mob-tabbar { display: none !important; }
+  .status-bar { display: flex !important; }
+}
+
+/* ── 平板（768-1024px）── */
+@media screen and (min-width: 768px) and (max-width: 1024px) {
+  .app {
+    grid-template-columns: 220px 1fr 220px !important;
+  }
+  .sec { padding: 8px 10px !important; }
+}
 </style>
 </head>
 <body>
@@ -1365,7 +1527,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 
 <!-- ══ STATUSBAR ══ -->
 <footer class="statusbar">
-  <div class="sb-seg"><span>MJ v8.5</span></div>
+  <div class="sb-seg"><span>MJ v9 PWA</span></div>
   <div class="sb-seg"><span>代碼</span><span class="sb-v" id="sb-tk">---</span></div>
   <div class="sb-seg"><span>方向</span><span class="sb-v" id="sb-dir">---</span></div>
   <div class="sb-seg"><span>K線</span><span class="sb-v" id="sb-can">---</span></div>
@@ -1373,6 +1535,22 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   <div class="sb-seg"><span>更新</span><span class="sb-v" id="sb-time">---</span></div>
   <div class="tape-wrap"><div class="tape-inner" id="tape"></div></div>
 </footer>
+
+<!-- ══ 手機底部 Tab 導航 ══ -->
+<nav class="mob-tabbar" id="mobTabbar">
+  <button class="mob-tab" id="tab-left" onclick="switchMobTab('left')">
+    <span class="mob-tab-icon">📊</span>
+    <span class="mob-tab-lbl">AI決策</span>
+  </button>
+  <button class="mob-tab active" id="tab-chart" onclick="switchMobTab('chart')">
+    <span class="mob-tab-icon">📈</span>
+    <span class="mob-tab-lbl">K線圖</span>
+  </button>
+  <button class="mob-tab" id="tab-right" onclick="switchMobTab('right')">
+    <span class="mob-tab-icon">🔢</span>
+    <span class="mob-tab-lbl">技術面</span>
+  </button>
+</nav>
 </div>
 
 
@@ -5336,7 +5514,9 @@ async function runAnalysis(tk){
 
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
 
-  ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');ld.style.opacity='';},400);
+  ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
+  // 手機：分析完成自動跳到 AI決策面板
+  if(window.innerWidth<=768) setTimeout(()=>switchMobTab('left'),200);ld.style.opacity='';},400);
 
   const t=a.dirCls==='bull'?'buy':a.dirCls==='bear'?'sell':'warn';
   const srcLabel = dataSource==='real'?'📡真實K線':'📊模擬數據';
@@ -7286,12 +7466,84 @@ function updFlaskUrlDisplay(){
 }
 window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
 
+
+/* ══════════════════════════════════════════════
+   📱 手機 Tab 切換系統
+   ══════════════════════════════════════════════ */
+function switchMobTab(tab) {
+  // 只在手機直式模式下生效
+  if (window.innerWidth > 768) return;
+
+  const left      = document.querySelector('aside.left');
+  const right     = document.querySelector('aside.right');
+  const chartArea = document.querySelector('main.chart-area');
+  const tabs      = document.querySelectorAll('.mob-tab');
+
+  // 全部隱藏
+  [left, right, chartArea].forEach(el => {
+    if (el) el.classList.remove('mob-active');
+  });
+  tabs.forEach(t => t.classList.remove('active'));
+
+  // 顯示對應的
+  if (tab === 'left'  && left)      left.classList.add('mob-active');
+  if (tab === 'right' && right)     right.classList.add('mob-active');
+  if (tab === 'chart' && chartArea) chartArea.classList.add('mob-active');
+
+  // 高亮對應 tab
+  const activeBtn = document.getElementById('tab-' + tab);
+  if (activeBtn) activeBtn.classList.add('active');
+
+  // 儲存狀態
+  window._mobActiveTab = tab;
+
+  // 切換到圖表時觸發 resize（lightweight-charts 需要）
+  if (tab === 'chart') {
+    setTimeout(() => {
+      if (G.lwMain) G.lwMain.applyOptions({width: chartArea.offsetWidth});
+      window.dispatchEvent(new Event('resize'));
+    }, 50);
+  }
+}
+
+// 手機初始化：預設顯示 K線圖
+function initMobileLayout() {
+  if (window.innerWidth <= 768) {
+    switchMobTab('chart');
+  }
+}
+
+// 監聽螢幕旋轉
+window.addEventListener('orientationchange', () => {
+  setTimeout(() => {
+    if (window.innerWidth > 768) {
+      // 回到桌面模式：全部顯示
+      ['aside.left','aside.right','main.chart-area'].forEach(sel => {
+        const el = document.querySelector(sel);
+        if (el) el.classList.remove('mob-active');
+      });
+    } else {
+      switchMobTab(window._mobActiveTab || 'chart');
+    }
+    window.dispatchEvent(new Event('resize'));
+  }, 300);
+});
+
+// resize 監聽
+window.addEventListener('resize', () => {
+  if (window.innerWidth <= 768) {
+    switchMobTab(window._mobActiveTab || 'chart');
+  }
+});
+
 // Service Worker 登記
 if('serviceWorker' in navigator){
   window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('./sw.js')
       .then(reg=>{ console.log('[SW] 已登記:', reg.scope); })
       .catch(e=>  { console.warn('[SW] 登記失敗:', e); });
+    // 手機佈局初始化
+    setTimeout(initMobileLayout, 100);
   });
 }
 
