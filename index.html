@@ -867,26 +867,32 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
     bottom: 56px !important;
     width: 100vw !important;
     max-width: 100vw !important;
-    overflow-y: auto !important;
-    overflow-x: hidden !important;
-    -webkit-overflow-scrolling: touch !important;
     display: none !important;
+    pointer-events: none !important;
+    z-index: 1 !important;
   }
+  /* Active 面板：最高層、可互動 */
   .app > aside.left.mob-active,
   .app > main.chart-area.mob-active,
-  .app > aside.right.mob-active { display: flex !important; }
-  /* 左右欄：縱向排列 + 允許滾動 */
+  .app > aside.right.mob-active {
+    display: flex !important;
+    pointer-events: auto !important;
+    z-index: 100 !important;
+  }
+  /* AI決策 / 技術面：縱向 + 可滾動 */
   .app > aside.left.mob-active,
   .app > aside.right.mob-active {
     flex-direction: column !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
   }
-  /* K線圖：不滾動，內容撐滿 */
+  /* K線圖：縱向 + 不滾動（canvas 自己處理） */
   .app > main.chart-area.mob-active {
     flex-direction: column !important;
     overflow: hidden !important;
+    touch-action: none !important;
   }
 
   /* ─── 5. Statusbar 隱藏，Tab Bar 在 row3 ─── */
