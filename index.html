@@ -1064,7 +1064,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
 
   <div class="sec">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
-      <span>🎯 AI 決策（六層融合）</span>
+      <span>🎯 AI 決策（七層融合）</span>
       <span id="aiSrcBadge" style="font-size:.58rem;padding:1px 6px;border-radius:3px;
             background:rgba(0,212,255,.1);color:#6a9ab8;border:1px solid #0d2030">
         公式引擎
@@ -1181,8 +1181,12 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
     <div class="layer-item">
       <div class="li-icon">🕯</div><div class="li-name">第五層：K線確認</div>
       <div class="li-badge wait" id="lb-can">待分析</div>
-    </div>
-    <div id="filterConclusion" style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
+          </div>
+          <div class="layer-item">
+            <div class="li-icon">🎯</div><div class="li-name">第七層：ICT/SMC 結構</div>
+            <div class="li-badge wait" id="lb-ict">待分析</div>
+          </div>
+          <div id="filterConclusion" style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
   </div>
 
   <div class="sec">
@@ -4031,7 +4035,8 @@ function updSL(a){
 
 function updLayers(a){
   [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],
-   ['lb-tech',a.pass.tech,a.rsiV.toFixed(0)+' RSI'],['lb-can',a.pass.can,a.entry]]
+   ['lb-tech',a.pass.tech,a.rsiV.toFixed(0)+' RSI'],['lb-can',a.pass.can,a.entry],
+      ['lb-ict', ICT_STATE.score>=60, ICT_STATE.score>0 ? ICT_STATE.score+'/100' : '待分析']]
   .forEach(([id,p,v])=>{
     const el=$(id);if(!el)return;
     el.className='li-badge '+(p?'pass':'fail');
@@ -4182,7 +4187,8 @@ function updSB(a){
   $('sb-dir').textContent=a.dir;
   $('sb-dir').className='sb-v '+(a.dirCls==='bull'?'bull':a.dirCls==='bear'?'bear':'amber');
   sv('sb-can',a.candleOK?'✓確認':'⏳等待',a.candleOK?'bull':'amber');
-  sv('sb-lay',a.passN+'/4',a.passN===4?'bull':a.passN<=1?'bear':'amber');
+  sv('sb-lay',(typeof ICT_STATE!=='undefined'&&ICT_STATE.score>0?Math.min(a.passN+1,5):a.passN)+'/5',  
+a.passN===4?'bull':a.passN<=1?'bear':'amber');
 
   // 更新 VaR(95%)
   const varEl=$('varV');
@@ -4208,6 +4214,16 @@ function updSB(a){
   }
 
   // 更新四層過濾 badge
+  // ── 第七層 ICT/SMC badge 更新 ──
+  const lbIct=$('lb-ict');
+  if(lbIct){
+    const ictSc=ICT_STATE.score;
+    if(ictSc>=70){lbIct.textContent='✅ '+ictSc+'/100';lbIct.className='li-badge pass';}
+    else if(ictSc>=50){lbIct.textContent='⚠ '+ictSc+'/100';lbIct.className='li-badge wait';}
+    else if(ictSc>0){lbIct.textContent='❌ '+ictSc+'/100';lbIct.className='li-badge fail';}
+    else{lbIct.textContent='⏳ 待分析';lbIct.className='li-badge wait';}
+  }
+
   const lbMac=$('lb-mac');
   if(lbMac){
     const macOk=a.macro!=='BEAR'&&a.macro!=='WEAK_BEAR';
@@ -6875,6 +6891,8 @@ function calcSmartFilter(ohlcv, techAn, chipAn){
   const fakeDetail = noFakeBreak?'近4根無假突破':'⚠ 偵測到假突破！';
 
   // 通過數量
+  const ictOk = ICT_STATE.score >= 60;
+  const ictDetail = ICT_STATE.score > 0 ? `ICT/SMC ${ICT_STATE.score}分（FVG+OB+BOS+OTE）` : 'ICT/SMC 尚未分析';
   const filters = [
     {id:'fc-trend', name:'趨勢確認', ok:trendOk,  detail:trendDetail},
     {id:'fc-chip',  name:'籌碼支撐', ok:chipOk,   detail:chipDetail},
@@ -6882,22 +6900,24 @@ function calcSmartFilter(ohlcv, techAn, chipAn){
     {id:'fc-risk',  name:'風報比合格',ok:rrOk,    detail:rrDetail},
     {id:'fc-macro', name:'宏觀不反對',ok:macroOk, detail:macroDetail},
     {id:'fc-fake',  name:'無假突破',  ok:noFakeBreak,detail:fakeDetail},
+    {id:'fc-ict',   name:'ICT/SMC結構',ok:ictOk,  detail:ictDetail},
   ];
-  const passCount = filters.filter(f=>f.ok).length;
+  const passCount = filters.filter(f=>f.ok).length;  
 
   // ── 最終裁決（取代評分制）──
   let verdict, vClass;
-  if(passCount===6){
-    verdict='🟢 六條件全過 → 可以進場！建議積極操作';  vClass='go';
+  if(passCount===7){
+    verdict='🟢 七條件全過 → 強烈訊號！建議積極操作';  vClass='go';
+  } else if(passCount===6){
+    verdict='🟢 六/七條件通過 → 可以進場！建議積極操作';  vClass='go';
   } else if(passCount>=4 && filters[0].ok && filters[3].ok){
-    verdict=`🟡 ${passCount}/6 通過 → 謹慎小倉（1/3）進場`;  vClass='wait';
+    verdict=`🟡 ${passCount}/7 通過 → 謹慎小倉（1/3）進場`;  vClass='wait';
   } else if(passCount>=3 && filters[0].ok){
-    verdict=`⏳ ${passCount}/6 通過 → 等待更多條件確認`; vClass='wait';
+    verdict=`⏳ ${passCount}/7 通過 → 等待更多條件確認`; vClass='wait';
   } else {
     const failNames = filters.filter(f=>!f.ok).map(f=>f.name).slice(0,2).join('、');
-    verdict=`🔴 ${passCount}/6 → 不建議進場（${failNames}不符）`; vClass='no';
-  }
-
+    verdict=`🔴 ${passCount}/7 → 不建議進場（${failNames}不符）`; vClass='no';
+  } 
   return{filters,passCount,verdict,vClass,rrVal};
 }
 
