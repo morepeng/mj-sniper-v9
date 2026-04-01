@@ -1186,7 +1186,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
             <div class="li-icon">🎯</div><div class="li-name">第七層：ICT/SMC 結構</div>
             <div class="li-badge wait" id="lb-ict">待分析</div>
           </div>
-          <div id="filterConclusion" style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
+          <div id="filterConclusion"  style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
   </div>
 
   <div class="sec">
@@ -1269,6 +1269,9 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
       <div class="fc" id="fc-risk"><div class="fc-icon">🛡</div><div class="fc-name">風報比合格</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
       <div class="fc" id="fc-macro"><div class="fc-icon">🌍</div><div class="fc-name">宏觀不反對</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
       <div class="fc" id="fc-fake"><div class="fc-icon">⚠</div><div class="fc-name">無假突破</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
+            <div class="fc" id="fc-ict"><div class="fc-icon">🎯</div><div class="fc-name">ICT/SMC結構</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
+          </div>  
+          
     </div>
     <div class="filter-verdict wait" id="filterVerdict">⏳ 等待分析…</div>
     <div class="limit-note" style="margin-top:5px;font-size:.63rem">
@@ -3836,7 +3839,8 @@ function analyse(d,tk){
     mac: macro!=='BEAR'&&macro!=='WEAK_BEAR',
     lead: leadTot>=5,  // 先行指標淨分 ≥ 5（正向）
     tech: techSc>5,    // 技術分淨多
-    can:  candleOK
+    can:  candleOK,
+    ict:  (typeof ICT_STATE!=='undefined')&&ICT_STATE.score>=60
   };
   const passN=Object.values(pass).filter(Boolean).length;
 
@@ -3844,8 +3848,12 @@ function analyse(d,tk){
   // BEAR市：leadTot 也縮放，避免先行分撐高總分
   const effLead = leadTot * mult;
 
-  let base=50 + techSc*mult + effLead*1.2 + fundWeight*0.5;
-  if(passN===4)base+=9;
+  const ictBonus=(typeof ICT_STATE!=='undefined'&&ICT_STATE.score>0)?(ICT_STATE.score-50)*0.10:0;
+    let base=50 + techSc*mult + effLead*1.2 + fundWeight*0.5 + ictBonus;
+
+  if(passN===5)base+=14;
+    else if(passN===4)base+=9;
+  
   else if(passN===3&&pass.mac)base+=4;
   else if(passN===3&&!pass.mac)base-=5; // 個股強但大盤空頭→扣分
   else if(passN<=1)base-=12;
@@ -6907,9 +6915,10 @@ function calcSmartFilter(ohlcv, techAn, chipAn){
   // ── 最終裁決（取代評分制）──
   let verdict, vClass;
   if(passCount===7){
-    verdict='🟢 七條件全過 → 強烈訊號！建議積極操作';  vClass='go';
-  } else if(passCount===6){
-    verdict='🟢 六/七條件通過 → 可以進場！建議積極操作';  vClass='go';
+      verdict='🟢 七條件全過 → 強烈訊號！ICT+AI雙確認，建議積極操作';  vClass='go';
+    } else if(passCount===6){
+      verdict=`🟢 ${passCount}/7 通過 → 可以進場！建議積極操作`;  vClass='go';  
+
   } else if(passCount>=4 && filters[0].ok && filters[3].ok){
     verdict=`🟡 ${passCount}/7 通過 → 謹慎小倉（1/3）進場`;  vClass='wait';
   } else if(passCount>=3 && filters[0].ok){
