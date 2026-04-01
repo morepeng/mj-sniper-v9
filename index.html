@@ -7831,10 +7831,10 @@ function ictCalcFVG(candles) {
     const gap1 = candles[i-1].low - candles[i-2].high;   // 多頭缺口
     const gap2 = candles[i-2].low - candles[i-1].high;   // 空頭缺口
     const ref = candles[i-2].close;
-    if(gap1 > ref * 0.003) {
+    if(gap1 > ref * 0.001) {
       score = 20; label = '▲ +' + gap1.toFixed(2); dir = 1; break;
     }
-    if(gap2 > ref * 0.003) {
+    if(gap2 > ref * 0.001) {
       score = 20; label = '▼ -' + gap2.toFixed(2); dir = -1; break;
     }
   }
@@ -7851,10 +7851,10 @@ function ictCalcOB(candles) {
     const body  = Math.abs(c[i].close - c[i].open);
     const prev  = Math.abs(c[i-1].close - c[i-1].open);
     const range = c[i].high - c[i].low || 1;
-    if(c[i].close > c[i-3].close && c[i-1].close < c[i-1].open && prev > body*0.35) {
+    if(c[i].close > c[i-3].close && c[i-1].close < c[i-1].open) {
       score = 20; label = '多OB ' + c[i-1].high.toFixed(2); break;
     }
-    if(c[i].close < c[i-3].close && c[i-1].close > c[i-1].open && prev > body*0.35) {
+    if(c[i].close < c[i-3].close && c[i-1].close > c[i-1].open) {
       score = 20; label = '空OB ' + c[i-1].low.toFixed(2); break;
     }
   }
@@ -7870,8 +7870,8 @@ function ictCalcBOS(candles) {
   const swH = Math.max(...slice.map(c=>c.high));
   const swL = Math.min(...slice.map(c=>c.low));
   const last = candles[n-1], prev = candles[n-2];
-  if(last.high > swH && last.close > prev.close)      { bosS = 15; label = '↑ BOS 多頭突破'; }
-  else if(last.low < swL && last.close < prev.close)  { bosS = 15; label = '↓ BOS 空頭突破'; }
+  if(last.high > swH)      { bosS = 15; label = '↑ BOS 多頭突破'; }
+  else if(last.low < swL){ bosS = 15; label = '↓ BOS 空頭突破'; }
   if((last.close > swH && prev.close < swL) ||
      (last.close < swL && prev.close > swH))           { chochS = 15; label = '⚡ CHoCH 結構反轉'; }
   return { score: Math.min(30, bosS + chochS), label };
@@ -7881,7 +7881,7 @@ function ictCalcBOS(candles) {
 function ictCalcOTE(candles) {
   const n = candles.length;
   if(n < 30) return { score: 0, label: '資料不足' };
-  const w = candles.slice(-30);
+  const w = candles.slice(-50);
   const high = Math.max(...w.map(c=>c.high));
   const low  = Math.min(...w.map(c=>c.low));
   const imp  = high - low;
@@ -7907,8 +7907,9 @@ function ictCalcVolume(candles) {
   const ratio = volMa > 0 ? lastV/volMa : 1;
   if(ratio >= 2.0) return { score: 10, label: '×'+ratio.toFixed(1)+' 爆量' };
   if(ratio >= 1.5) return { score: 10, label: '×'+ratio.toFixed(1)+' 放量' };
-  if(ratio >= 1.0) return { score: 5,  label: '×'+ratio.toFixed(1)+' 正常' };
-  return { score: 0, label: '×'+ratio.toFixed(1)+' 縮量' };
+  if(ratio >= 1.0) return { score: 8,  label: '×'+ratio.toFixed(1)+' 正常量' };
+  if(ratio >= 0.7) return { score: 5,  label: '×'+ratio.toFixed(1)+' 稍縮量' };
+  return { score: 2, label: '×'+ratio.toFixed(1)+' 縮量' };
 }
 
 /* ── PO3 階段 + Silver Bullet Killzone ── */
@@ -7920,7 +7921,7 @@ function ictCalcPO3andKZ(candles) {
     const last  = candles[n-1];
     const body  = Math.abs(last.close-last.open);
     const range = last.high - last.low || 1;
-    if((last.volume||0) > 1.5*volMa && body/range > 0.5) { po3S = 10; po3Label = '✅ 分配階段'; }
+    if((last.volume||0) > 1.2*volMa && body/range > 0.35) { po3S = 10; po3Label = '✅ 分配階段'; }
     else if((last.volume||0) < 0.8*volMa && body/range < 0.3) { po3Label = '積累階段'; }
     else { po3Label = '操控/過渡'; }
   }
@@ -7944,6 +7945,7 @@ function ictComputeScore(candles) {
   const adj    = raw * (1 + (ICT_STATE.smcWeight - 0.25) * 0.5);
   // 成交量額外加分
   const total  = Math.min(100, Math.max(0, Math.round(adj + vol.score)));
+  console.log('[ICT/SMC] 各分項：FVG='+fvg.score+' OB='+ob.score+' BOS='+bos.score+' OTE='+ote.score+' PO3KZ='+po3kz.score+' VOL='+vol.score+' → 總分='+total);
   const components = { fvg, ob, bos, ote, vol, po3kz,
     smcPts: fvg.score + ob.score,
     strPts: bos.score,
@@ -8002,6 +8004,7 @@ function ictRenderScore(score, comp) {
 
 /* ── 主入口（供外部呼叫）── */
 function ictRunOnCandles(candlesArr) {
+  console.log('[ICT/SMC] 收到K線資料:', candlesArr?.length, '根 | 最新收盤:', candlesArr?.[candlesArr.length-1]?.close);
   if(!candlesArr || !candlesArr.length) return;
   const result = ictComputeScore(candlesArr);
   if(result) ictRenderScore(result.totalScore, result.components);
