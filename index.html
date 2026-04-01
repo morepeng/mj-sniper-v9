@@ -1064,7 +1064,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
 
   <div class="sec">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
-      <span>🎯 AI 決策（六層融合）</span>
+      <span>🎯 AI 決策（七層融合）</span>
       <span id="aiSrcBadge" style="font-size:.58rem;padding:1px 6px;border-radius:3px;
             background:rgba(0,212,255,.1);color:#6a9ab8;border:1px solid #0d2030">
         公式引擎
@@ -1180,21 +1180,25 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
     </div>
     <div class="layer-item">
       <div class="li-icon">🕯</div><div class="li-name">第五層：K線確認</div>
-      <div class="li-badge wait" id="lb-ict">待分析</div>
-    </div>
-    <div class="layer-item">
-      <div class="li-icon">📐</div><div class="li-name">第八層：道氏理論</div>
-      <div class="li-badge wait" id="lb-dow">道氏 ---</div>
-    </div>
-    <div class="layer-item">
-      <div class="li-icon">🌊</div><div class="li-name">第九層：威科夫</div>
-      <div class="li-badge wait" id="lb-wyck">威科夫 ---</div>
-    </div>
-    <div class="layer-item">
-      <div class="li-icon">💧</div><div class="li-name">第十層：OFI訂單流</div>
-      <div class="li-badge wait" id="lb-ofi">OFI ---</div>
-    </div>
-    <div id="filterConclusion"  
+      <div class="li-badge wait" id="lb-can">待分析</div>
+          </div>
+          <div class="layer-item">
+            <div class="li-icon">🎯</div><div class="li-name">第七層：ICT/SMC 結構</div>
+            <div class="li-badge wait" id="lb-ict">待分析</div>
+          </div>
+          <div class="layer-item">
+            <div class="li-icon">📐</div><div class="li-name">第八層：道氏理論</div>
+            <div class="li-badge wait" id="lb-dow">道氏 ---</div>
+          </div>
+          <div class="layer-item">
+            <div class="li-icon">🌊</div><div class="li-name">第九層：威科夫</div>
+            <div class="li-badge wait" id="lb-wyck">威科夫 ---</div>
+          </div>
+          <div class="layer-item">
+            <div class="li-icon">💧</div><div class="li-name">第十層：OFI訂單流</div>
+            <div class="li-badge wait" id="lb-ofi">OFI ---</div>
+          </div>
+          <div id="filterConclusion"  style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
   </div>
 
   <div class="sec">
@@ -1277,6 +1281,9 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
       <div class="fc" id="fc-risk"><div class="fc-icon">🛡</div><div class="fc-name">風報比合格</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
       <div class="fc" id="fc-macro"><div class="fc-icon">🌍</div><div class="fc-name">宏觀不反對</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
       <div class="fc" id="fc-fake"><div class="fc-icon">⚠</div><div class="fc-name">無假突破</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
+            <div class="fc" id="fc-ict"><div class="fc-icon">🎯</div><div class="fc-name">ICT/SMC結構</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
+          </div>  
+          
     </div>
     <div class="filter-verdict wait" id="filterVerdict">⏳ 等待分析…</div>
     <div class="limit-note" style="margin-top:5px;font-size:.63rem">
@@ -3851,12 +3858,12 @@ function analyse(d,tk){
     ofi:  parseFloat(ofiEngine.ofiScore)>=1.5
   };
   const passN=Object.values(pass).filter(Boolean).length;
-  
+
   // ── 宏觀乘數同時作用在技術分和先行分上（關鍵修復）──
   // BEAR市：leadTot 也縮放，避免先行分撐高總分
   const effLead = leadTot * mult;
 
-  
+  const ictBonus=(typeof ICT_STATE!=='undefined'&&ICT_STATE.score>0)?(ICT_STATE.score-50)*0.10:0;
   const dowBonus=dowEngine.tScore*0.6;
   const wyckBonus=wyckEngine.wScore*0.4;
   const ofiBonus=parseFloat(ofiEngine.ofiScore)*0.5;
@@ -3867,7 +3874,7 @@ function analyse(d,tk){
   else if(passN===5)base+=10;
   else if(passN===4)base+=6;
   else if(passN===3&&pass.mac)base+=3;
-  else if(passN===3&&!pass.mac)base-=5; // 個股強但大盤空頭→扣分  
+  else if(passN===3&&!pass.mac)base-=5; // 個股強但大盤空頭→扣分
   else if(passN<=1)base-=12;
   if(!candleOK)base=Math.min(base,55);
   if(risk==='high')base=Math.min(base,52);
@@ -4012,7 +4019,7 @@ function analyse(d,tk){
            note:`OFI:${ofiScore.toFixed(1)}|CVD:${cvdTrend>0?'+':''}${cvdTrend.toFixed(0)}|POC:${poc.toFixed(2)}|${absorption?'⚠吸收':'正常流'}`};
   })();
   const ofi=ofiEngine.ofi;
-  const ofiNote=ofiEngine.note;  
+  const ofiNote=ofiEngine.note;
 
   // 多頭機率（線性換算，非統計學貝葉斯）
   const bayesRaw = Math.max(5, Math.min(95, 50 + score*0.4 + passN*4));
@@ -4020,7 +4027,6 @@ function analyse(d,tk){
   const bayesNote = '※評分線性換算，非統計學貝葉斯';
   const ttm=atrV/last*100<2?'🟥 壓縮中':'🟢 已釋放';
   const stSig=stV?(stV.t>0?'多頭 ↑':'空頭 ↓'):'---';
-  const ofi=histV?(histV>0?'Bullish ↑':'Bearish ↓'):'Neutral';
 
   // 警告列表（還原 v8.5 全部警告邏輯）
   const warns=[];
@@ -4036,7 +4042,6 @@ function analyse(d,tk){
   else if(passN===6)warns.push({t:'pos',m:'🎯 六層通過！三引擎共振強力信號'});
   else if(passN===5)warns.push({t:'pos',m:'✅ 五層通過！高信心信號'});
   else if(passN===4)warns.push({t:'pos',m:'✅ 四層通過！標準多頭信號'});
-
   if(dow==='Bullish'&&last>(ma20||0))warns.push({t:'pos',m:'✅ 道氏 Bullish + 站上MA20'});
   if(bullEngulf)warns.push({t:'pos',m:'✅ 多頭吞噬形態 +4分'});
   if(hammer)warns.push({t:'pos',m:'✅ 錘子線形態 +2分'});
@@ -4050,7 +4055,6 @@ function analyse(d,tk){
   if(wyckEngine.sosSig)warns.push({t:'pos',m:'✅ 威科夫SOS：力量顯示，趨勢啟動'});
   if(dowEngine.inRetrace)warns.push({t:'info',m:`ℹ 道氏回調${dowEngine.retracePct}%，黃金回調區間`});
   if(pass.dow&&pass.wyck&&pass.ofi)warns.push({t:'pos',m:'🎯 三引擎共振！道氏+威科夫+OFI齊鳴，最高信心'});
-
   // 技術指標固有限制提醒
   if(score>=72){
     warns.push({t:'caut',m:'⚠ 高分提醒：技術指標滯後N根K線，強烈買入信號≠立刻漲，需配合籌碼確認'});
@@ -4085,7 +4089,7 @@ function analyse(d,tk){
     lstmBull:lstmBull.toFixed(2),lstmBase:lstmBase.toFixed(2),lstmBear:lstmBear.toFixed(2),
     lstmDirOnly,lstmConf:conf,lstmSig:tF>0?'Bullish ↑':'Bearish ↓',
     dow,dowPhase,dowNote,wyck,wyckNote,ofi,ofiNote,bayes,stSig,stV,ttm,warns,
-    dowEngine,wyckEngine,ofiEngine,  
+    dowEngine,wyckEngine,ofiEngine,
     patBuy,patSell,patSigsShort,
     last,prev,priceChg:last-prev,priceChgP:(last/prev-1)*100,
     fundGrade,
@@ -4167,16 +4171,16 @@ function updSL(a){
 function updLayers(a){
   [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],
    ['lb-tech',a.pass.tech,a.rsiV.toFixed(0)+' RSI'],['lb-can',a.pass.can,a.entry],
-   ['lb-ict',(typeof ICT_STATE!=='undefined')&&ICT_STATE.score>=60,
-    (typeof ICT_STATE!=='undefined')&&ICT_STATE.score>0?ICT_STATE.score+'/100':'待分析'],
-  ].forEach(([id,p,v])=>{
+      ['lb-ict', ICT_STATE.score>=60, ICT_STATE.score>0 ? ICT_STATE.score+'/100' : '待分析']]
+  .forEach(([id,p,v])=>{
     const el=$(id);if(!el)return;
     el.className='li-badge '+(p?'pass':'fail');
     el.textContent=(p?'✓ ':'✗ ')+v;
   });
-const lbD=$('lb-dow');if(lbD){lbD.className='li-badge '+(a.pass.dow?'pass':'fail');lbD.textContent=(a.pass.dow?'✓ ':'✗ ')+(a.dowPhase||a.dow);}
-const lbW=$('lb-wyck');if(lbW){lbW.className='li-badge '+(a.pass.wyck?'pass':'fail');lbW.textContent=(a.pass.wyck?'✓ ':'✗ ')+(a.wyck||'觀察中');}
-const lbO=$('lb-ofi');if(lbO){lbO.className='li-badge '+(a.pass.ofi?'pass':'fail');lbO.textContent=(a.pass.ofi?'✓ ':'✗ ')+`OFI ${a.ofi||'Neutral'}`;}  
+  const lbD=$('lb-dow');if(lbD){lbD.className='li-badge '+(a.pass&&a.pass.dow?'pass':'fail');lbD.textContent=(a.pass&&a.pass.dow?'✓ ':'✗ ')+(a.dowPhase||a.dow||'---');}
+  const lbW=$('lb-wyck');if(lbW){lbW.className='li-badge '+(a.pass&&a.pass.wyck?'pass':'fail');lbW.textContent=(a.pass&&a.pass.wyck?'✓ ':'✗ ')+(a.wyck||'觀察中');}
+  const lbO=$('lb-ofi');if(lbO){lbO.className='li-badge '+(a.pass&&a.pass.ofi?'pass':'fail');lbO.textContent=(a.pass&&a.pass.ofi?'✓ ':'✗ ')+`OFI ${a.ofi||'Neutral'}`;}
+
 }
 
 function updLeading(a){
@@ -4322,8 +4326,9 @@ function updSB(a){
   $('sb-dir').textContent=a.dir;
   $('sb-dir').className='sb-v '+(a.dirCls==='bull'?'bull':a.dirCls==='bear'?'bear':'amber');
   sv('sb-can',a.candleOK?'✓確認':'⏳等待',a.candleOK?'bull':'amber');
-  sv('sb-lay',a.passN+'/8',a.passN>=6?'bull':a.passN<=2?'bear':'amber'); 
-  
+  sv('sb-lay',a.passN+'/8',
+a.passN>=6?'bull':a.passN<=2?'bear':'amber');
+
   // 更新 VaR(95%)
   const varEl=$('varV');
   if(varEl && a.varVal){
@@ -4348,6 +4353,16 @@ function updSB(a){
   }
 
   // 更新四層過濾 badge
+  // ── 第七層 ICT/SMC badge 更新 ──
+  const lbIct=$('lb-ict');
+  if(lbIct){
+    const ictSc=ICT_STATE.score;
+    if(ictSc>=70){lbIct.textContent='✅ '+ictSc+'/100';lbIct.className='li-badge pass';}
+    else if(ictSc>=50){lbIct.textContent='⚠ '+ictSc+'/100';lbIct.className='li-badge wait';}
+    else if(ictSc>0){lbIct.textContent='❌ '+ictSc+'/100';lbIct.className='li-badge fail';}
+    else{lbIct.textContent='⏳ 待分析';lbIct.className='li-badge wait';}
+  }
+
   const lbMac=$('lb-mac');
   if(lbMac){
     const macOk=a.macro!=='BEAR'&&a.macro!=='WEAK_BEAR';
@@ -7015,6 +7030,8 @@ function calcSmartFilter(ohlcv, techAn, chipAn){
   const fakeDetail = noFakeBreak?'近4根無假突破':'⚠ 偵測到假突破！';
 
   // 通過數量
+  const ictOk = ICT_STATE.score >= 60;
+  const ictDetail = ICT_STATE.score > 0 ? `ICT/SMC ${ICT_STATE.score}分（FVG+OB+BOS+OTE）` : 'ICT/SMC 尚未分析';
   const filters = [
     {id:'fc-trend', name:'趨勢確認', ok:trendOk,  detail:trendDetail},
     {id:'fc-chip',  name:'籌碼支撐', ok:chipOk,   detail:chipDetail},
@@ -7022,22 +7039,25 @@ function calcSmartFilter(ohlcv, techAn, chipAn){
     {id:'fc-risk',  name:'風報比合格',ok:rrOk,    detail:rrDetail},
     {id:'fc-macro', name:'宏觀不反對',ok:macroOk, detail:macroDetail},
     {id:'fc-fake',  name:'無假突破',  ok:noFakeBreak,detail:fakeDetail},
+    {id:'fc-ict',   name:'ICT/SMC結構',ok:ictOk,  detail:ictDetail},
   ];
-  const passCount = filters.filter(f=>f.ok).length;
+  const passCount = filters.filter(f=>f.ok).length;  
 
   // ── 最終裁決（取代評分制）──
   let verdict, vClass;
-  if(passCount===6){
-    verdict='🟢 六條件全過 → 可以進場！建議積極操作';  vClass='go';
+  if(passCount===7){
+      verdict='🟢 七條件全過 → 強烈訊號！ICT+AI雙確認，建議積極操作';  vClass='go';
+    } else if(passCount===6){
+      verdict=`🟢 ${passCount}/7 通過 → 可以進場！建議積極操作`;  vClass='go';  
+
   } else if(passCount>=4 && filters[0].ok && filters[3].ok){
-    verdict=`🟡 ${passCount}/6 通過 → 謹慎小倉（1/3）進場`;  vClass='wait';
+    verdict=`🟡 ${passCount}/7 通過 → 謹慎小倉（1/3）進場`;  vClass='wait';
   } else if(passCount>=3 && filters[0].ok){
-    verdict=`⏳ ${passCount}/6 通過 → 等待更多條件確認`; vClass='wait';
+    verdict=`⏳ ${passCount}/7 通過 → 等待更多條件確認`; vClass='wait';
   } else {
     const failNames = filters.filter(f=>!f.ok).map(f=>f.name).slice(0,2).join('、');
-    verdict=`🔴 ${passCount}/6 → 不建議進場（${failNames}不符）`; vClass='no';
-  }
-
+    verdict=`🔴 ${passCount}/7 → 不建議進場（${failNames}不符）`; vClass='no';
+  } 
   return{filters,passCount,verdict,vClass,rrVal};
 }
 
