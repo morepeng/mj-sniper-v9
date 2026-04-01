@@ -8,11 +8,11 @@
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="MJ狙擊手">
 <meta name="theme-color" content="#050c14">
-<meta name="description" content="MJ 狙擊手 AI v9 — 多市場股票分析終端，Yahoo Finance直連，無需伺服器">
+<meta name="description" content="MJ 狙擊手 AI v9.5 — 九層融合分析終端，OFI訂單流+道氏+威科夫引擎，Yahoo Finance直連">
 <link rel="manifest" href="manifest.json">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
-<title>MJ 狙擊手 AI v9 — PWA 戰術看盤終端</title>
+<title>MJ 狙擊手 AI v9.5 — 九層融合 PWA 戰術看盤終端</title>
 <script src="https://unpkg.com/lightweight-charts@4.1.3/dist/lightweight-charts.standalone.production.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Rajdhani:wght@400;500;600;700&family=Share+Tech+Mono&family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
@@ -994,7 +994,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
   <div class="brand">
     <div>
       <div class="brand-logo">MJ<span>狙擊手</span>AI</div>
-      <div class="brand-ver">v9 PWA · Yahoo直連 · 六層分析</div>
+      <div class="brand-ver">v9.5 PWA · Yahoo直連 · 九層融合 · OFI+道氏+威科夫</div>
     </div>
     <div class="live-dot"></div>
   </div>
@@ -1064,7 +1064,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
 
   <div class="sec">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
-      <span>🎯 AI 決策（七層融合）</span>
+      <span>🎯 AI 決策（九層融合）</span>
       <span id="aiSrcBadge" style="font-size:.58rem;padding:1px 6px;border-radius:3px;
             background:rgba(0,212,255,.1);color:#6a9ab8;border:1px solid #0d2030">
         公式引擎
@@ -1183,7 +1183,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
       <div class="li-badge wait" id="lb-can">待分析</div>
           </div>
           <div class="layer-item">
-            <div class="li-icon">🎯</div><div class="li-name">第七層：ICT/SMC 結構</div>
+            <div class="li-icon">🎯</div><div class="li-name">第七層：道氏理論引擎</div>
             <div class="li-badge wait" id="lb-ict">待分析</div>
           </div>
           <div id="filterConclusion"  style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
@@ -1315,7 +1315,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
 <main class="chart-area">
   <div class="loading" id="loading">
     <div class="spin"></div>
-    <div class="ld-text" id="ldTxt">初始化六層分析引擎</div>
+    <div class="ld-text" id="ldTxt">初始化九層融合引擎</div>
     <div class="ld-steps" id="ldSteps"></div>
   </div>
 
@@ -1714,7 +1714,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
   <div class="sb-seg"><span>代碼</span><span class="sb-v" id="sb-tk">---</span></div>
   <div class="sb-seg"><span>方向</span><span class="sb-v" id="sb-dir">---</span></div>
   <div class="sb-seg"><span>K線</span><span class="sb-v" id="sb-can">---</span></div>
-  <div class="sb-seg"><span>4層</span><span class="sb-v" id="sb-lay">--/4</span></div>
+  <div class="sb-seg"><span>9層</span><span class="sb-v" id="sb-lay">--/4</span></div>
   <div class="sb-seg"><span>更新</span><span class="sb-v" id="sb-time">---</span></div>
   <div class="tape-wrap"><div class="tape-inner" id="tape"></div></div>
 </footer>
@@ -1788,7 +1788,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
 <script>
 /* ═══════════════════════════════════════════════════════════════════
    MJ 狙擊手 AI v9 完整互動引擎
-   ─ 完整模擬 Python 版六層分析流程
+   ─ 完整模擬 Python 版九層融合分析流程
    ─ 神奇九轉 TD Sequential 即時計算與K線標記
    ─ Lightweight Charts 真實K線 + 多疊加指標
    ─ 停損線可滑動調整即時更新圖表
@@ -2193,7 +2193,7 @@ function detectSigs(d,indic){
 }
 
 /* ════════════════════════════════════════════════════════
-   MJ v8.5 六層分析引擎
+   MJ v8.5 九層融合引擎
    ════════════════════════════════════════════════════════ */
 
 /* ════════════════════════════════════════════════════════════════════
@@ -3836,11 +3836,15 @@ function analyse(d,tk){
      ── 修復：基本面等級（fundWeight）正確整合 ──
   ══════════════════════════════════════════════════════ */
   const pass={
-    mac: macro!=='BEAR'&&macro!=='WEAK_BEAR',
-    lead: leadTot>=5,  // 先行指標淨分 ≥ 5（正向）
-    tech: techSc>5,    // 技術分淨多
-    can:  candleOK,
-    ict:  (typeof ICT_STATE!=='undefined')&&ICT_STATE.score>=60
+    mac:  macro!=='BEAR'&&macro!=='WEAK_BEAR',           // L0 宏觀環境
+    lead: leadTot>=5,                                     // L2 先行指標
+    tech: techSc>5,                                       // L4 技術面
+    can:  candleOK,                                       // L5 K線確認
+    ict:  (typeof ICT_STATE!=='undefined')&&ICT_STATE.score>=60, // ICT/SMC
+    dow7: dowEngine.trendScore >= 2,                      // L7 道氏理論
+    wyck8:['Phase C 彈簧','Phase D SOS','Phase D LPS','Mark-up'].some(p=>wyck.includes(p.split(' ').slice(0,2).join(' '))||wyck.startsWith(p)), // L8 威科夫
+    ofi9: parseFloat(ofiEngine.ofiScore) >= 1.5,         // L9 OFI訂單流
+    liq9: !ofiEngine.absorption || (ofiEngine.absorptionBias||'').includes('買方'), // 流動性
   };
   const passN=Object.values(pass).filter(Boolean).length;
 
@@ -3888,28 +3892,191 @@ function analyse(d,tk){
   const kelly=Math.max(0,Math.min(25,(parseFloat(rr)*.55-.45)/parseFloat(rr)*100)).toFixed(1);
   const varVal=Math.round(last*(G.slPct/100)*1000);
 
-  // 道氏趨勢（均線排列判斷，非真正道氏理論）
-  const dow = last>(ma50||0) && (ma20||0)>(ma50||0) ? 'Bullish' : 'Bearish';
-  const dowNote = '※均線排列判斷，非完整道氏理論';
-
-  // 威科夫（用L3/L5指標近似，非真實盤口分析）
-  const wyck=(()=>{
-    if(L3<-3&&L5<-2)return'Phase A 分配';
-    if(L3<-1&&L5<0)return'Phase B 測試';
-    if(L2<-2&&rsiV<35)return'Phase C 彈簧';
-    if(L3>2&&L5>2)return'Phase D 確認';
-    if(last>(ma20||0)*1.06)return'Mark-up ↑';
-    return'中性/觀察';
+  // ══════════════════════════════════════════════════════
+  // 第七層：完整道氏理論引擎
+  // ① 主要趨勢：ZigZag識別 HH/HL 或 LH/LL
+  // ② 六大原則評分：擺動點+均線+成交量+動能
+  // ══════════════════════════════════════════════════════
+  const dowEngine = (()=>{
+    const swingLen = Math.min(5, Math.floor(n/6));
+    const swingHighs = [], swingLows = [];
+    for(let i = swingLen; i < n - swingLen; i++){
+      const h = hi[i], l2 = lo[i];
+      const isSwHigh = h === Math.max(...hi.slice(i-swingLen, i+swingLen+1));
+      const isSwLow  = l2 === Math.min(...lo.slice(i-swingLen, i+swingLen+1));
+      if(isSwHigh) swingHighs.push({i, v: h});
+      if(isSwLow)  swingLows.push({i, v: l2});
+    }
+    const recentH = swingHighs.slice(-3);
+    const recentL = swingLows.slice(-3);
+    let primaryTrend = 'Neutral', trendScore = 0;
+    if(recentH.length >= 2 && recentL.length >= 2){
+      const hhOk = recentH[recentH.length-1].v > recentH[recentH.length-2].v;
+      const hlOk = recentL[recentL.length-1].v > recentL[recentL.length-2].v;
+      const lhOk = recentH[recentH.length-1].v < recentH[recentH.length-2].v;
+      const llOk = recentL[recentL.length-1].v < recentL[recentL.length-2].v;
+      if(hhOk && hlOk){ primaryTrend = 'Bullish'; trendScore += 4; }
+      else if(lhOk && llOk){ primaryTrend = 'Bearish'; trendScore -= 4; }
+    }
+    if(ma20 && ma50 && ma200){
+      if(last>ma20 && ma20>ma50 && ma50>ma200) trendScore += 3;
+      else if(last<ma20 && ma20<ma50 && ma50<ma200) trendScore -= 3;
+    }
+    const vol10avg = vol.slice(-10).reduce((a,b)=>a+b,0)/10+1;
+    const vol3avg  = vol.slice(-3).reduce((a,b)=>a+b,0)/3+1;
+    const volConfirm = (primaryTrend==='Bullish' && vol3avg>vol10avg) ||
+                       (primaryTrend==='Bearish' && vol3avg<vol10avg);
+    if(volConfirm) trendScore += 2;
+    const recentPH = recentH.length>=1 ? recentH[recentH.length-1].v : last;
+    const recentPL = recentL.length>=1 ? recentL[recentL.length-1].v : last;
+    const retrace = recentPH>recentPL ? (recentPH-last)/(recentPH-recentPL+0.001) : 0;
+    const retracePct = Math.max(0,Math.min(1,retrace))*100;
+    const inRetrace = retracePct>=30 && retracePct<=65;
+    if(ma200) trendScore += last>ma200*1.02?2:last<ma200*0.98?-2:0;
+    if(histV!==null) trendScore += histV>0?1:-1;
+    const dowPhase = trendScore>=6?'強勢多頭':trendScore>=3?'多頭確認':
+                     trendScore>=0?'中性偏多':trendScore>=-3?'中性偏空':
+                     trendScore>=-6?'空頭確認':'強勢空頭';
+    const dow2 = trendScore>=2?'Bullish':trendScore<=-2?'Bearish':'Neutral';
+    return {
+      dow:dow2, dowPhase, trendScore,
+      primaryTrend, retracePct:retracePct.toFixed(1), inRetrace, volConfirm,
+      swHi:recentH.length, swLo:recentL.length,
+      note:`評分${trendScore>0?'+':''}${trendScore} | HH/HL:${recentH.length}H/${recentL.length}L | 回調${retracePct.toFixed(0)}% | 量${volConfirm?'確認':'未確認'}`,
+    };
   })();
-  const wyckNote = '※先行指標近似，非真實盤口分析';
+  const dow = dowEngine.dow;
+  const dowPhase = dowEngine.dowPhase;
+  const dowNote = `道氏七層 | ${dowEngine.note}`;
+
+  // ══════════════════════════════════════════════════════
+  // 第八層：完整威科夫四階段引擎
+  // SC/AR/ST → Phase A；建倉 → Phase B；
+  // Spring/UTAD → Phase C；SOS/LPS → Phase D；Mark-up/down → Phase E
+  // ══════════════════════════════════════════════════════
+  const wyckoffEngine = (()=>{
+    const vol20w = vol.slice(-20);
+    const vol5w  = vol.slice(-5);
+    const avgV20w = vol20w.reduce((a,b)=>a+b,0)/20+1;
+    const avgV5w  = vol5w.reduce((a,b)=>a+b,0)/5+1;
+    const volSurge = avgV5w / avgV20w;
+    const rangeHi  = Math.max(...hi.slice(-20));
+    const rangeLo  = Math.min(...lo.slice(-20));
+    const rangeRng = rangeHi - rangeLo + 0.0001;
+    const posInRange = (last - rangeLo) / rangeRng;
+    const mom3w  = (cl[n-1]-cl[Math.max(0,n-4)])  / cl[Math.max(0,n-4)]  * 100;
+    const mom10w = (cl[n-1]-cl[Math.max(0,n-11)]) / cl[Math.max(0,n-11)] * 100;
+    const scSignal     = posInRange < 0.2  && volSurge > 1.8;
+    const arSignal     = posInRange < 0.35 && mom3w > 2;
+    const stSignalW    = posInRange < 0.25 && volSurge < 0.8 && mom3w > -1;
+    const springSignal = lo[n-1] < rangeLo*1.005 && cl[n-1] > lo[n-1]*1.01 && vol[n-1] < avgV20w;
+    const sosSignal    = posInRange > 0.6  && volSurge > 1.3 && mom10w > 3;
+    const lpsSignal    = posInRange > 0.4  && posInRange < 0.65 && volSurge < 0.9 && mom3w > -2;
+    const utadSignal   = posInRange > 0.85 && volSurge > 1.5 && mom3w < 1;
+    const psySignal    = posInRange > 0.75 && volSurge > 1.3 && mom3w < -1;
+    let wScore = 0;
+    if(scSignal)     wScore += 3;
+    if(arSignal)     wScore += 2;
+    if(stSignalW)    wScore += 2;
+    if(springSignal) wScore += 5;
+    if(sosSignal)    wScore += 4;
+    if(lpsSignal)    wScore += 3;
+    if(utadSignal)   wScore -= 4;
+    if(psySignal)    wScore -= 3;
+    wScore += L3 * 0.3 + L5 * 0.2;
+    if(rsiV < 35) wScore += 2; if(rsiV > 70) wScore -= 2;
+    if(mfiV < 30) wScore += 2; if(mfiV > 70) wScore -= 2;
+    let wyckPhase, wyckBias;
+    if(springSignal && posInRange < 0.3){ wyckPhase='Phase C 彈簧 🌱'; wyckBias='bull'; }
+    else if(sosSignal){                   wyckPhase='Phase D SOS ↑';    wyckBias='bull'; }
+    else if(lpsSignal){                   wyckPhase='Phase D LPS ⟳';    wyckBias='bull'; }
+    else if(scSignal){                    wyckPhase='Phase A SC底 🔵';   wyckBias='neutral'; }
+    else if(arSignal && stSignalW){       wyckPhase='Phase B 建倉中';    wyckBias='neutral'; }
+    else if(utadSignal){                  wyckPhase='Phase B UTAD ⚠';    wyckBias='bear'; }
+    else if(psySignal){                   wyckPhase='Phase A 初步供給';  wyckBias='bear'; }
+    else if(posInRange > 0.7 && mom10w > 5){ wyckPhase='Mark-up 上漲 ↑'; wyckBias='bull'; }
+    else if(posInRange < 0.3 && mom10w < -5){ wyckPhase='Mark-down 下跌 ↓'; wyckBias='bear'; }
+    else { wyckPhase='觀察中 / 震盪'; wyckBias='neutral'; }
+    return {
+      wyck:wyckPhase, wyckBias, wScore:Math.round(wScore),
+      posInRange:(posInRange*100).toFixed(0), volSurge:volSurge.toFixed(2),
+      springSignal, sosSignal, lpsSignal, utadSignal,
+      note:`位置${(posInRange*100).toFixed(0)}% | 量比${volSurge.toFixed(1)} | Spring:${springSignal?'✅':'—'} SOS:${sosSignal?'✅':'—'} UTAD:${utadSignal?'⚠':'—'}`,
+    };
+  })();
+  const wyck = wyckoffEngine.wyck;
+  const wyckNote = `威科夫八層 | ${wyckoffEngine.note}`;
+
+  // ══════════════════════════════════════════════════════
+  // 第九層：OFI 訂單流不平衡引擎
+  // ① Delta代理計算（buy/sell ratio × volume）
+  // ② CVD累積量差趨勢
+  // ③ 多周期OFI（3/5/10/20根）
+  // ④ 吸收分析（量大價不動）
+  // ⑤ POC成交密集區定位
+  // ══════════════════════════════════════════════════════
+  const ofiEngine = (()=>{
+    const lookback = Math.min(30, n);
+    const deltas = [];
+    for(let i = n-lookback; i < n; i++){
+      const range = hi[i] - lo[i] + 0.0001;
+      const buyRatio  = (cl[i] - lo[i]) / range;
+      const sellRatio = (hi[i] - cl[i]) / range;
+      deltas.push((buyRatio - sellRatio) * vol[i]);
+    }
+    let cvd9 = 0;
+    const cvdArr = deltas.map(d=>(cvd9+=d, cvd9));
+    const cvdLast = cvdArr[cvdArr.length-1]||0;
+    const cvd5ago = cvdArr[Math.max(0,cvdArr.length-6)]||0;
+    const cvdTrend = cvdLast - cvd5ago;
+    const ofi3  = deltas.slice(-3).reduce((a,b)=>a+b,0);
+    const ofi5  = deltas.slice(-5).reduce((a,b)=>a+b,0);
+    const ofi10 = deltas.slice(-10).reduce((a,b)=>a+b,0);
+    const ofi20 = deltas.slice(-20).reduce((a,b)=>a+b,0);
+    const avgV5n  = vol.slice(-5).reduce((a,b)=>a+b,0)/5+1;
+    const avgV10n = vol.slice(-10).reduce((a,b)=>a+b,0)/10+1;
+    const avgV20n = vol.slice(-20).reduce((a,b)=>a+b,0)/20+1;
+    const o3n = ofi3/(avgV5n*3), o5n = ofi5/(avgV5n*5);
+    const o10n = ofi10/(avgV10n*10), o20n = ofi20/(avgV20n*20);
+    const priceMove5 = Math.abs(cl[n-1]-cl[Math.max(0,n-6)])/cl[Math.max(0,n-6)];
+    const vSurge5 = vol.slice(-5).reduce((a,b)=>a+b,0)/(5*avgV20n);
+    const absorption = vSurge5 > 1.5 && priceMove5 < 0.015;
+    const absorptionBias = absorption ? (o5n>0?'買方吸收 ↑':'賣方吸收 ↓') : null;
+    let volSumP=0, vwapSumP=0;
+    for(let i=Math.max(0,n-20);i<n;i++){
+      const vp=(hi[i]+lo[i]+cl[i])/3;
+      vwapSumP+=vp*vol[i]; volSumP+=vol[i];
+    }
+    const poc = volSumP>0 ? vwapSumP/volSumP : last;
+    const abovePOC = last > poc;
+    let ofiScore9 = o3n*3 + o5n*2.5 + o10n*2 + o20n*1.5;
+    ofiScore9 += cvdTrend>0?1:-1;
+    ofiScore9 += abovePOC?0.5:-0.5;
+    if(absorption) ofiScore9 *= 0.7;
+    ofiScore9 = Math.max(-10, Math.min(10, ofiScore9));
+    let ofiSignal;
+    if(absorptionBias)        ofiSignal = absorptionBias;
+    else if(ofiScore9 >= 4)   ofiSignal = 'Bullish ↑↑';
+    else if(ofiScore9 >= 1.5) ofiSignal = 'Bullish ↑';
+    else if(ofiScore9 <= -4)  ofiSignal = 'Bearish ↓↓';
+    else if(ofiScore9 <= -1.5) ofiSignal = 'Bearish ↓';
+    else ofiSignal = 'Neutral ↔';
+    return {
+      ofi:ofiSignal, ofiScore:ofiScore9.toFixed(2),
+      cvdTrend:cvdTrend.toFixed(0), o3n:o3n.toFixed(2), o5n:o5n.toFixed(2),
+      poc:poc.toFixed(2), abovePOC, absorption, absorptionBias,
+      note:`OFI評分${ofiScore9.toFixed(1)} | CVD${cvdTrend>0?'+':''}${cvdTrend.toFixed(0)} | POC:${poc.toFixed(2)} | ${abovePOC?'價格>POC':'價格<POC'} | ${absorption?'⚠吸收中':'正常流'}`,
+    };
+  })();
+  const ofi = ofiEngine.ofi;
+  const ofiNote = ofiEngine.note;
 
   // 多頭機率（線性換算，非統計學貝葉斯）
-  const bayesRaw = Math.max(5, Math.min(95, 50 + score*0.4 + passN*4));
+  const bayesRaw = Math.max(5, Math.min(95, 50 + score*0.4 + passN*3));
   const bayes = bayesRaw.toFixed(1);
   const bayesNote = '※評分線性換算，非統計學貝葉斯';
   const ttm=atrV/last*100<2?'🟥 壓縮中':'🟢 已釋放';
   const stSig=stV?(stV.t>0?'多頭 ↑':'空頭 ↓'):'---';
-  const ofi=histV?(histV>0?'Bullish ↑':'Bearish ↓'):'Neutral';
 
   // 警告列表（還原 v8.5 全部警告邏輯）
   const warns=[];
@@ -3925,10 +4092,17 @@ function analyse(d,tk){
   if(dow==='Bullish'&&last>(ma20||0))warns.push({t:'pos',m:'✅ 道氏 Bullish + 站上MA20'});
   if(bullEngulf)warns.push({t:'pos',m:'✅ 多頭吞噬形態 +4分'});
   if(hammer)warns.push({t:'pos',m:'✅ 錘子線形態 +2分'});
-  warns.push({t:'info',m:'ℹ 道氏:'+dow+' | 威科夫:'+wyck});
-  warns.push({t:'info',m:'  '+dowNote+' / '+wyckNote});
-  warns.push({t:'info',m:`ℹ SuperTrend:${stSig} | TTM:${ttm} | OFI:${ofi}`});
-    warns.push({t:'info',m:'ℹ 多頭機率:'+bayes+'%（'+bayesNote+'）'});
+  warns.push({t:'info',m:`ℹ 道氏[L7]:${dowPhase} | ${dowEngine.note}`});
+  warns.push({t:'info',m:`ℹ 威科夫[L8]:${wyck} | ${wyckoffEngine.note}`});
+  warns.push({t:'info',m:`ℹ OFI[L9]:${ofi} | ${ofiNote}`});
+  warns.push({t:'info',m:`ℹ SuperTrend:${stSig} | TTM:${ttm}`});
+  warns.push({t:'info',m:'ℹ 多頭機率:'+bayes+'%（'+bayesNote+'）'});
+  if(ofiEngine.absorption) warns.push({t:'caut',m:`⚠ OFI吸收偵測：${ofiEngine.absorptionBias}，等待方向確認再進場`});
+  if(wyckoffEngine.springSignal) warns.push({t:'pos',m:'🌱 威科夫彈簧信號！潛在底部反轉，風報比極佳'});
+  if(wyckoffEngine.sosSignal) warns.push({t:'pos',m:'💪 威科夫SOS（力量顯示）：需求佔優，趨勢確認'});
+  if(wyckoffEngine.utadSignal) warns.push({t:'crit',m:'⚠ 威科夫UTAD（頂部吸收）：高位量增不漲，警惕分配'});
+  if(dowEngine.inRetrace) warns.push({t:'info',m:`ℹ 道氏回調${dowEngine.retracePct}%，位於38-65%正常回調區間`});
+  if(dowEngine.primaryTrend==='Bullish'&&ofiEngine.ofiScore>=1.5) warns.push({t:'pos',m:'✅ 道氏多頭 + OFI正向：雙引擎共振，信號強度提升'});
   // 技術指標固有限制提醒
   if(score>=72){
     warns.push({t:'caut',m:'⚠ 高分提醒：技術指標滯後N根K線，強烈買入信號≠立刻漲，需配合籌碼確認'});
@@ -3968,6 +4142,9 @@ function analyse(d,tk){
     fundGrade,
     ma20a,ma50a,sta,vegU:veg.u,vegL:veg.l,
     buyScore:buyScore0, sellScore:sellScore0,
+    dowEngine,dowPhase,dowNote,
+    wyckoffEngine,wyckNote,
+    ofiEngine,ofiNote,
   };
 }
 
@@ -3995,8 +4172,9 @@ function updPriceBar(a){
     ['MA20',fmt(a.ma20),a.last>(a.ma20||0)?'bull':'bear'],
     ['MA50',fmt(a.ma50),a.last>(a.ma50||0)?'bull':'bear'],
     ['ATR',fmt(a.atrV),''],
-    ['道氏',a.dow,a.dow==='Bullish'?'bull':'bear'],
-    ['威科夫',a.wyck.split(' ')[0],'purple'],
+    ['道氏',a.dowPhase?(a.dowPhase.slice(0,4)):(a.dow==='Bullish'?'多頭':'空頭'),a.dow==='Bullish'?'bull':'bear'],
+    ['威科夫',a.wyck.split(' ').slice(0,2).join(' '),'purple'],
+    ['OFI',a.ofi.split(' ')[0],a.ofi.includes('Bull')||a.ofi.includes('買方')?'bull':a.ofi.includes('Bear')||a.ofi.includes('賣方')?'bear':'amber'],
     ['ST',a.stSig,a.stSig.includes('多')?'bull':'bear'],
     ['TTM',a.ttm,a.ttm.includes('壓縮')?'amber':'bull'],
     ['MFI',a.mfiV.toFixed(0),a.mfiV>70?'bear':a.mfiV<30?'bull':''],
@@ -4029,7 +4207,23 @@ function updDecision(a){
   const bar=$('decBar');
   bar.style.width=a.score+'%';
   bar.style.background=a.dirCls==='bull'?'#00e676':a.dirCls==='bear'?'#ff1744':'#ffab00';
-  $('decPos').textContent=`建議倉位: ${a.maxPos} | 通過 ${a.passN}/4 層`;
+  $('decPos').textContent=`建議倉位: ${a.maxPos} | 通過 ${a.passN}/9 層`;
+  // 九層引擎詳細狀態
+  let niuEl = document.getElementById('niuEngines');
+  if(!niuEl){ niuEl=document.createElement('div'); niuEl.id='niuEngines';
+    niuEl.style.cssText='margin-top:6px;padding:5px 8px;background:rgba(0,0,0,.3);border-radius:4px;border:1px solid rgba(0,212,255,.1);font-size:.6rem;line-height:1.7;color:#5a8aa8';
+    $('decBox').appendChild(niuEl); }
+  const ofiCl = (a.ofi||'').includes('Bull')||(a.ofi||'').includes('買方')?'#00e676':(a.ofi||'').includes('Bear')||(a.ofi||'').includes('賣方')?'#ff1744':'#ffab00';
+  const dowCl = (a.dow==='Bullish')?'#00e676':'#ff1744';
+  const wyckCl = (a.wyckoffEngine?.wyckBias==='bull')?'#00e676':(a.wyckoffEngine?.wyckBias==='bear')?'#ff1744':'#ce93d8';
+  niuEl.innerHTML =
+    `<span style="color:#00d4ff;font-weight:600">【九層引擎】</span> `+
+    `<span style="color:${dowCl}">道氏:${a.dowPhase||a.dow}</span> │ `+
+    `<span style="color:${wyckCl}">威科夫:${(a.wyck||'').split(' ').slice(0,3).join(' ')}</span> │ `+
+    `<span style="color:${ofiCl}">OFI:${a.ofi||'--'}</span>`+
+    (a.ofiEngine?.absorption?` <span style="color:#ffab00">⚠吸收</span>`:'') +
+    (a.wyckoffEngine?.springSignal?` <span style="color:#00e676">🌱Spring</span>`:'') +
+    (a.wyckoffEngine?.sosSignal?` <span style="color:#00e676">💪SOS</span>`:'');
   $('decTime').textContent=`進場時機: ${a.entryL[a.entry]||a.entry}`;
 }
 
@@ -4044,7 +4238,9 @@ function updSL(a){
 function updLayers(a){
   [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],
    ['lb-tech',a.pass.tech,a.rsiV.toFixed(0)+' RSI'],['lb-can',a.pass.can,a.entry],
-      ['lb-ict', ICT_STATE.score>=60, ICT_STATE.score>0 ? ICT_STATE.score+'/100' : '待分析']]
+   ['lb-ict', ICT_STATE.score>=60, ICT_STATE.score>0 ? ICT_STATE.score+'/100' : '待分析'],
+   ['lb-dow7', a.pass?.dow7, a.dowPhase||(a.dow==='Bullish'?'Bullish':'Bearish')],
+   ['lb-ofi9', a.pass?.ofi9, a.ofi||'Neutral']]
   .forEach(([id,p,v])=>{
     const el=$(id);if(!el)return;
     el.className='li-badge '+(p?'pass':'fail');
@@ -4058,7 +4254,7 @@ function updLeading(a){
   const items=[
     {n:'L1 廣度動能',v:a.L1,d:'OBV趨勢/量能廣度/量價一致性'},
     {n:'L2 情緒/VIX',v:a.L2,d:'RSI極端區 | MFI: '+(a.mfiV||0).toFixed(0)+(a.mfiV>75?' ⚠過熱':a.mfiV<25?' ✅超賣':'')},
-    {n:'L3 資金流向',v:a.L3,d:'OBV/MFI/A-D方向 | OFI:'+ofi},
+    {n:'L3 資金流向',v:a.L3,d:'OBV/MFI/A-D | OFI:'+ofi+(a.ofiEngine?.absorption?' ⚠吸收':'')+' POC:'+( a.ofiEngine?.poc||'--')},
     {n:'L4 宏觀領先',v:a.L4,d:'SuperTrend方向/MA200/長期趨勢'},
     {n:'L5 市場結構',v:a.L5,d:'成交量結構/10日動能'},
   ];
@@ -4089,11 +4285,11 @@ function updMacro(a){
     ['倉位上限',a.maxPos,'amber'],
     ['VIX估算',vix,parseFloat(vix)>25?'bear':parseFloat(vix)<18?'bull':'amber'],
     ['Put/Call',pcr,parseFloat(pcr)>1.15?'bull':parseFloat(pcr)<.75?'bear':''],
-    ['道氏趨勢',a.dow,a.dow==='Bullish'?'bull':'bear','※均線排列近似'],
-    ['威科夫',a.wyck,'purple','※指標近似，非盤口'],
+    ['道氏[L7]',a.dowPhase||(a.dow==='Bullish'?'多頭確認':'空頭確認'),a.dow==='Bullish'?'bull':'bear',`評分${a.dowEngine?.trendScore>0?'+':''}${a.dowEngine?.trendScore||''}`],
+    ['威科夫[L8]',a.wyck,(a.wyckoffEngine?.wyckBias||'neutral')==='bull'?'bull':(a.wyckoffEngine?.wyckBias||'neutral')==='bear'?'bear':'purple',a.wyckoffEngine?.note?.split('|')[0]||''],
+    ['OFI[L9]',a.ofi+(a.ofiEngine?.abovePOC?' 上POC':' 下POC'),a.ofi.includes('Bull')||a.ofi.includes('買方')?'bull':a.ofi.includes('Bear')||a.ofi.includes('賣方')?'bear':'amber',`POC:${a.ofiEngine?.poc||'--'}`],
     ['SuperTrend',a.stSig,a.stSig.includes('多')?'bull':'bear'],
     ['TTM Squeeze',a.ttm,a.ttm.includes('壓縮')?'amber':'bull'],
-    ['OFI訂單流',a.ofi,a.ofi.includes('Bull')?'bull':a.ofi.includes('Bear')?'bear':'amber'],
     ['多頭機率',a.bayes+'%',parseFloat(a.bayes)>60?'bull':parseFloat(a.bayes)<40?'bear':'amber','※線性換算'],
     ['空頭機率',(100-parseFloat(a.bayes)).toFixed(1)+'%',parseFloat(a.bayes)<40?'bear':parseFloat(a.bayes)>60?'bull':'amber','貝葉斯融合'],
     ['基本面',a.fundGrade,'cyan'],
@@ -4177,7 +4373,7 @@ function updTech(a){
     ['道氏趨勢',a.dow,a.dow==='Bullish'?'bull':'bear','※均線排列近似'],
     ['威科夫',a.wyck,'purple','※指標近似，非盤口'],
     ['多頭機率',a.bayes+'%',parseFloat(a.bayes)>60?'bull':parseFloat(a.bayes)<40?'bear':'amber','※線性換算非真貝葉斯'],
-    ['OFI訂單流',a.ofi,a.ofi.includes('Bull')?'bull':a.ofi.includes('Bear')?'bear':'amber',''],
+    ['OFI[L9]訂單流',a.ofi+(a.ofiEngine?.abovePOC?' ↑POC':' ↓POC'),a.ofi.includes('Bull')||a.ofi.includes('買方')?'bull':a.ofi.includes('Bear')||a.ofi.includes('賣方')?'bear':'amber',`CVD${(a.ofiEngine?.cvdTrend||0)>0?'+':''}${a.ofiEngine?.cvdTrend||''}`],
     ['SuperTrend',a.stSig,a.stSig.includes('多')?'bull':'bear',''],
     ['TTM Squeeze',a.ttm,a.ttm.includes('壓縮')?'amber':'bull',''],
     ['假突破偵測',a.fakeBreak?'🚨 有！':'✅ 無',a.fakeBreak?'bear':'bull',''],
@@ -4990,6 +5186,11 @@ function buildAiPrompt(a) {
     '凱利比例: ' + fmt2(a.kelly) + '%',
     '最大允許倉位: ' + (a.maxPos||'N/A'),
     '',
+    '【九層引擎 L7-L9】',
+    '道氏七層: ' + (a.dowPhase||a.dow||'N/A') + ' | ' + (a.dowNote||''),
+    '威科夫八層: ' + (a.wyck||'N/A') + ' | ' + (a.wyckNote||''),
+    'OFI訂單流: ' + (a.ofi||'N/A') + ' | ' + (a.ofiNote||''),
+    '─────────────────',
     '【威科夫/道氏階段】',
     '道氏理論: ' + (a.dow||'N/A'),
     '威科夫階段: ' + (a.wyck||'N/A'),
