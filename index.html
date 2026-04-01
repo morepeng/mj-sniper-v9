@@ -5689,6 +5689,7 @@ async function runAnalysis(tk){
   $('btRunBtn').textContent='▶ 執行回測（'+ohlcv.length+'根K線）';
 
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
+  window._ictCandles = ohlcv; ictRunOnCandles(ohlcv); // ICT/SMC 評分 Hook
 
   ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
   // 手機：分析完成自動跳到 AI決策面板
