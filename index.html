@@ -922,6 +922,68 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 @media screen and (min-width: 769px) and (max-width: 1024px) {
   .app { grid-template-columns: 210px 1fr 210px !important; }
 }
+
+/* ══════════════════════════════════════════
+   ICT / SMC 評分面板樣式
+   ══════════════════════════════════════════ */
+.ict-panel{padding:10px 11px;border-bottom:1px solid #1a3550;flex-shrink:0}
+.ict-score-wrap{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.ict-gauge{position:relative;width:54px;height:54px;flex-shrink:0}
+.ict-gauge svg{width:54px;height:54px;transform:rotate(-90deg)}
+.ict-gauge-bg{fill:none;stroke:#0e1f33;stroke-width:5}
+.ict-gauge-fill{fill:none;stroke-width:5;stroke-linecap:round;transition:stroke-dashoffset 1s cubic-bezier(.22,.68,0,1.2),stroke .4s}
+.ict-gauge-text{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;font-family:var(--fm);line-height:1}
+.ict-gauge-num{font-size:.9rem;font-weight:700}
+.ict-gauge-lbl{font-size:.45rem;color:#5a8aa8;letter-spacing:.04em;margin-top:1px}
+.ict-info{flex:1}
+.ict-signal-lbl{font-family:var(--ft);font-size:.82rem;font-weight:700;letter-spacing:.06em}
+.ict-signal-lbl.bull{color:#00e676}
+.ict-signal-lbl.bear{color:#ff1744}
+.ict-signal-lbl.wait{color:#ffab00}
+.ict-signal-lbl.neu{color:#5a8aa8}
+.ict-sub{font-size:.61rem;color:#5a8aa8;margin-top:2px}
+.ict-rows{display:flex;flex-direction:column;gap:0}
+.ict-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid rgba(14,31,51,.7)}
+.ict-row:last-child{border-bottom:none}
+.ict-row-k{font-size:.63rem;color:#7aafc8;display:flex;align-items:center;gap:3px}
+.ict-row-v{font-family:var(--fm);font-size:.65rem;font-weight:700;min-width:32px;text-align:right}
+.ict-row-v.pass{color:#00e676}
+.ict-row-v.fail{color:#ff1744}
+.ict-row-v.wait{color:#ffab00}
+.ict-row-v.cyan{color:#00d4ff}
+.ict-row-v.purple{color:#ce93d8}
+.ict-bar-wrap{flex:1;margin:0 6px;height:3px;background:#09121f;border-radius:2px;overflow:hidden}
+.ict-bar-fill{height:100%;border-radius:2px;transition:width .9s cubic-bezier(.22,.68,0,1.2)}
+.ict-market-row{display:flex;gap:3px;margin-bottom:7px}
+.ict-mkt-btn{flex:1;font-family:var(--fm);font-size:.57rem;padding:3px 0;border-radius:2px;border:1px solid #152d4a;background:transparent;color:#5a8aa8;cursor:pointer;transition:all .12s;letter-spacing:.04em}
+.ict-mkt-btn:hover,.ict-mkt-btn.on{border-color:#00d4ff;color:#00d4ff;background:rgba(0,212,255,.08)}
+.ict-kz-badge{display:inline-block;font-size:.58rem;padding:1px 5px;border-radius:2px;font-weight:700;letter-spacing:.04em;margin-top:2px}
+.ict-kz-badge.active{background:rgba(0,230,118,.12);color:#00e676;border:1px solid rgba(0,230,118,.3)}
+.ict-kz-badge.inactive{background:rgba(90,138,168,.08);color:#3a6078;border:1px solid #152d4a}
+.ict-weight-row{display:flex;align-items:center;gap:6px;margin-top:6px}
+.ict-weight-lbl{font-size:.6rem;color:#5a8aa8;white-space:nowrap}
+.ict-weight-val{font-family:var(--fm);font-size:.66rem;font-weight:700;color:#ffab00;min-width:28px}
+input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
+.ict-components{display:grid;grid-template-columns:1fr 1fr;gap:4px;margin-top:6px}
+.ict-comp{background:#09121f;border:1px solid #1a3550;border-radius:3px;padding:5px 6px;position:relative;overflow:hidden}
+.ict-comp::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px}
+.ict-comp.c-fvg::before{background:#00d4ff}
+.ict-comp.c-ob::before{background:#ffab00}
+.ict-comp.c-bos::before{background:#00e676}
+.ict-comp.c-ote::before{background:#ce93d8}
+.ict-comp.c-kz::before{background:#ff6d00}
+.ict-comp.c-vol::before{background:#5591c7}
+.ict-comp-lbl{font-size:.58rem;color:#7aafc8;margin-bottom:2px}
+.ict-comp-val{font-family:var(--fm);font-size:.75rem;font-weight:700}
+.ict-comp-val.pass{color:#00e676}
+.ict-comp-val.fail{color:#3a6078}
+.ict-comp-val.warn{color:#ffab00}
+.ict-comp-val.cyan{color:#00d4ff}
+.ict-comp-val.purple{color:#ce93d8}
+.ict-comp-val.orange{color:#ff6d00}
+.ict-kz-tbl{display:flex;flex-direction:column;gap:2px;font-size:.59rem;font-family:var(--fm)}
+.ict-kz-row{display:flex;justify-content:space-between;padding:1px 3px;border-radius:2px}
+.ict-kz-row.active-mkt{background:rgba(0,212,255,.06)}
 </style>
 </head>
 <body>
@@ -1517,6 +1579,120 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
       </div>
     </div>
   </div>
+
+  <!-- ══ ICT/SMC 評分模組 v9 ══ -->
+  <div class="sec ict-panel" id="ictPanel">
+    <div class="sec-title">🎯 ICT/SMC 評分 <span class="v9-badge">CN 新增</span></div>
+
+    <!-- 市場切換 -->
+    <div class="ict-market-row">
+      <button class="ict-mkt-btn on" data-mkt="TW" onclick="ictSetMarket('TW',this)">🇹🇼 TW</button>
+      <button class="ict-mkt-btn" data-mkt="US" onclick="ictSetMarket('US',this)">🇺🇸 US</button>
+      <button class="ict-mkt-btn" data-mkt="HK" onclick="ictSetMarket('HK',this)">🇭🇰 HK</button>
+      <button class="ict-mkt-btn" data-mkt="CN" onclick="ictSetMarket('CN',this)">🇨🇳 CN</button>
+    </div>
+
+    <!-- 總分儀表 -->
+    <div class="ict-score-wrap">
+      <div class="ict-gauge">
+        <svg viewBox="0 0 54 54">
+          <circle class="ict-gauge-bg" cx="27" cy="27" r="22"/>
+          <circle class="ict-gauge-fill" id="ictGaugeFill" cx="27" cy="27" r="22"
+            stroke="#1c3d64" stroke-dasharray="138.2" stroke-dashoffset="138.2"/>
+        </svg>
+        <div class="ict-gauge-text">
+          <span class="ict-gauge-num" id="ictScoreNum" style="color:#3a6078">--</span>
+          <span class="ict-gauge-lbl">/ 100</span>
+        </div>
+      </div>
+      <div class="ict-info">
+        <div class="ict-signal-lbl neu" id="ictSignalLbl">等待分析</div>
+        <div class="ict-sub" id="ictKzBadgeWrap">
+          <span class="ict-kz-badge inactive" id="ictKzBadge">⏰ Killzone 未啟動</span>
+        </div>
+        <div style="font-size:.58rem;color:#3a6078;margin-top:3px" id="ictMarketTime">--</div>
+      </div>
+    </div>
+
+    <!-- SMC 權重調整 -->
+    <div class="ict-weight-row">
+      <span class="ict-weight-lbl">SMC 佔比</span>
+      <input type="range" id="ictSmcWeight" min="10" max="50" value="25" step="5"
+             oninput="ictUpdateWeight(this.value)">
+      <span class="ict-weight-val" id="ictWeightVal">25%</span>
+    </div>
+
+    <!-- 六大因子組件 -->
+    <div class="ict-components">
+      <div class="ict-comp c-fvg">
+        <div class="ict-comp-lbl">FVG 公平缺口</div>
+        <div class="ict-comp-val cyan" id="ict-fvg">--</div>
+      </div>
+      <div class="ict-comp c-ob">
+        <div class="ict-comp-lbl">OB 訂單塊</div>
+        <div class="ict-comp-val warn" id="ict-ob">--</div>
+      </div>
+      <div class="ict-comp c-bos">
+        <div class="ict-comp-lbl">BOS / CHoCH</div>
+        <div class="ict-comp-val pass" id="ict-bos">--</div>
+      </div>
+      <div class="ict-comp c-ote">
+        <div class="ict-comp-lbl">OTE 斐波 61.8%</div>
+        <div class="ict-comp-val purple" id="ict-ote">--</div>
+      </div>
+      <div class="ict-comp c-kz">
+        <div class="ict-comp-lbl">Silver Bullet KZ</div>
+        <div class="ict-comp-val fail" id="ict-kz">--</div>
+      </div>
+      <div class="ict-comp c-vol">
+        <div class="ict-comp-lbl">成交量濾網</div>
+        <div class="ict-comp-val fail" id="ict-vol">--</div>
+      </div>
+    </div>
+
+    <!-- 評分條 -->
+    <div class="ict-rows" style="margin-top:8px">
+      <div class="ict-row">
+        <span class="ict-row-k">📦 SMC 核心</span>
+        <div class="ict-bar-wrap"><div class="ict-bar-fill" id="ict-bar-smc" style="width:0%;background:#00d4ff"></div></div>
+        <span class="ict-row-v cyan" id="ict-sc-smc">0/40</span>
+      </div>
+      <div class="ict-row">
+        <span class="ict-row-k">🏗 結構 BOS+CHoCH</span>
+        <div class="ict-bar-wrap"><div class="ict-bar-fill" id="ict-bar-str" style="width:0%;background:#00e676"></div></div>
+        <span class="ict-row-v pass" id="ict-sc-str">0/30</span>
+      </div>
+      <div class="ict-row">
+        <span class="ict-row-k">🎯 PO3+Silver Bullet</span>
+        <div class="ict-bar-wrap"><div class="ict-bar-fill" id="ict-bar-po3" style="width:0%;background:#ff6d00"></div></div>
+        <span class="ict-row-v" style="color:#ff6d00" id="ict-sc-po3">0/20</span>
+      </div>
+      <div class="ict-row">
+        <span class="ict-row-k">📐 OTE 斐波</span>
+        <div class="ict-bar-wrap"><div class="ict-bar-fill" id="ict-bar-ote" style="width:0%;background:#ce93d8"></div></div>
+        <span class="ict-row-v purple" id="ict-sc-ote">0/10</span>
+      </div>
+    </div>
+
+    <!-- Killzone 時間表 -->
+    <div style="margin-top:7px;padding:6px 8px;background:#08111e;border-radius:3px;border:1px solid #0e1f33">
+      <div style="font-size:.57rem;color:#3a6078;margin-bottom:4px;letter-spacing:.05em">⏱ KILLZONE 時間表</div>
+      <div class="ict-kz-tbl">
+        <div class="ict-kz-row" id="ict-kz-tw"><span style="color:#5a8aa8">🇹🇼 TW</span><span style="color:#7aafc8">09:00-10:30 ｜ 13:30-14:30</span></div>
+        <div class="ict-kz-row" id="ict-kz-us"><span style="color:#5a8aa8">🇺🇸 US</span><span style="color:#7aafc8">10:00-11:00 NY</span></div>
+        <div class="ict-kz-row" id="ict-kz-hk"><span style="color:#5a8aa8">🇭🇰 HK</span><span style="color:#7aafc8">09:30-10:30 ｜ 14:00-15:00</span></div>
+        <div class="ict-kz-row" id="ict-kz-cn"><span style="color:#00d4ff">🇨🇳 CN</span><span style="color:#00d4ff">09:30-10:30 ｜ 13:00-14:00</span></div>
+      </div>
+    </div>
+
+    <div class="limit-note info" style="margin-top:6px">
+      <b style="color:#00d4ff">📌 ICT/SMC 整合說明：</b><br>
+      SMC 因子建議佔整體策略 <b>20-30%</b>（滑桿可調）<br>
+      評分 ≥70 + OTE + Killzone = 高機率入場<br>
+      <span style="color:#5a8aa8">⚠ 配合左側 AI 決策效果最佳</span>
+    </div>
+  </div>
+
 
   <div class="sec">
     <div class="sec-title">🔬 技術深度（8項）</div>
@@ -7574,6 +7750,303 @@ window.installPWA = async ()=>{
   if(res.outcome==='accepted') toast('✅ 安裝成功！', 'buy', 3000);
   _pwaPrompt = null;
 };
+
+/* ════════════════════════════════════════════════════════════════
+   ICT / SMC 完整策略引擎 — MJ狙擊手 v9 整合版
+   支援：TW / US / HK / CN 四市場 Silver Bullet Killzone
+   SMC 佔比可調（建議 20-30%）
+   作者整合自：ICT Silver Bullet + PO3 + OTE斐波 + OB/FVG/BOS/CHoCH
+   ════════════════════════════════════════════════════════════════ */
+
+const ICT_STATE = {
+  market: 'TW',
+  smcWeight: 0.25,
+  score: 0,
+  components: {},
+  killzones: {
+    TW: [[9,0,10,30],[13,30,14,30]],
+    US: [[10,0,11,0]],
+    HK: [[9,30,10,30],[14,0,15,0]],
+    CN: [[9,30,10,30],[13,0,14,0]]
+  }
+};
+
+/* ── 市場切換 ── */
+function ictSetMarket(mkt, btn) {
+  ICT_STATE.market = mkt;
+  document.querySelectorAll('.ict-mkt-btn').forEach(b => b.classList.remove('on'));
+  if(btn) btn.classList.add('on');
+  // 更新時間表高亮
+  ['tw','us','hk','cn'].forEach(m => {
+    const el = document.getElementById('ict-kz-'+m);
+    if(el) el.classList.toggle('active-mkt', m === mkt.toLowerCase());
+  });
+  ictCheckKillzone();
+  if(ICT_STATE.score > 0) ictRenderScore(ICT_STATE.score, ICT_STATE.components);
+}
+
+/* ── SMC 權重調整 ── */
+function ictUpdateWeight(val) {
+  ICT_STATE.smcWeight = val / 100;
+  document.getElementById('ictWeightVal').textContent = val + '%';
+  if(ICT_STATE.score > 0) ictRenderScore(ICT_STATE.score, ICT_STATE.components);
+}
+
+/* ── Killzone 時間判斷 ── */
+function ictCheckKillzone() {
+  const now = new Date();
+  const h = now.getHours(), m = now.getMinutes();
+  const ranges = ICT_STATE.killzones[ICT_STATE.market] || [];
+  let inKZ = false;
+  for(const [sh,sm,eh,em] of ranges) {
+    if((h*60+m) >= (sh*60+sm) && (h*60+m) <= (eh*60+em)) { inKZ = true; break; }
+  }
+  const badge = document.getElementById('ictKzBadge');
+  const mktInfo = {
+    TW:'台股 09:00-10:30/13:30-14:30',
+    US:'美股 10:00-11:00 NY',
+    HK:'港股 09:30-10:30/14:00-15:00',
+    CN:'陸股 09:30-10:30/13:00-14:00'
+  };
+  if(badge) {
+    if(inKZ) {
+      badge.className = 'ict-kz-badge active';
+      badge.textContent = '⚡ ' + ICT_STATE.market + ' Killzone 啟動中';
+    } else {
+      badge.className = 'ict-kz-badge inactive';
+      badge.textContent = '⏰ ' + (mktInfo[ICT_STATE.market]||'Killzone 未啟動');
+    }
+  }
+  const timeEl = document.getElementById('ictMarketTime');
+  if(timeEl) timeEl.textContent = ICT_STATE.market + ' 本地時間 ' +
+    String(h).padStart(2,'0') + ':' + String(m).padStart(2,'0');
+  return inKZ;
+}
+
+/* ── FVG 公平缺口偵測 ── */
+function ictCalcFVG(candles) {
+  let score = 0, label = '無 FVG', dir = 0;
+  for(let i = candles.length-1; i >= 2 && i >= candles.length-25; i--) {
+    const gap1 = candles[i-1].low - candles[i-2].high;   // 多頭缺口
+    const gap2 = candles[i-2].low - candles[i-1].high;   // 空頭缺口
+    const ref = candles[i-2].close;
+    if(gap1 > ref * 0.003) {
+      score = 20; label = '▲ +' + gap1.toFixed(2); dir = 1; break;
+    }
+    if(gap2 > ref * 0.003) {
+      score = 20; label = '▼ -' + gap2.toFixed(2); dir = -1; break;
+    }
+  }
+  return { score, label, dir };
+}
+
+/* ── OB 訂單塊偵測 ── */
+function ictCalcOB(candles) {
+  const n = candles.length;
+  let score = 0, label = '無 OB';
+  if(n < 5) return { score, label };
+  for(let i = n-1; i >= 3 && i >= n-20; i--) {
+    const c = candles;
+    const body  = Math.abs(c[i].close - c[i].open);
+    const prev  = Math.abs(c[i-1].close - c[i-1].open);
+    const range = c[i].high - c[i].low || 1;
+    if(c[i].close > c[i-3].close && c[i-1].close < c[i-1].open && prev > body*0.35) {
+      score = 20; label = '多OB ' + c[i-1].high.toFixed(2); break;
+    }
+    if(c[i].close < c[i-3].close && c[i-1].close > c[i-1].open && prev > body*0.35) {
+      score = 20; label = '空OB ' + c[i-1].low.toFixed(2); break;
+    }
+  }
+  return { score, label };
+}
+
+/* ── BOS / CHoCH 市場結構 ── */
+function ictCalcBOS(candles) {
+  const n = candles.length;
+  let bosS = 0, chochS = 0, label = '無結構訊號';
+  if(n < 12) return { score: 0, label };
+  const slice = candles.slice(-8,-1);
+  const swH = Math.max(...slice.map(c=>c.high));
+  const swL = Math.min(...slice.map(c=>c.low));
+  const last = candles[n-1], prev = candles[n-2];
+  if(last.high > swH && last.close > prev.close)      { bosS = 15; label = '↑ BOS 多頭突破'; }
+  else if(last.low < swL && last.close < prev.close)  { bosS = 15; label = '↓ BOS 空頭突破'; }
+  if((last.close > swH && prev.close < swL) ||
+     (last.close < swL && prev.close > swH))           { chochS = 15; label = '⚡ CHoCH 結構反轉'; }
+  return { score: Math.min(30, bosS + chochS), label };
+}
+
+/* ── OTE 斐波 61.8–78.6% 回撤 ── */
+function ictCalcOTE(candles) {
+  const n = candles.length;
+  if(n < 30) return { score: 0, label: '資料不足' };
+  const w = candles.slice(-30);
+  const high = Math.max(...w.map(c=>c.high));
+  const low  = Math.min(...w.map(c=>c.low));
+  const imp  = high - low;
+  if(imp <= 0) return { score: 0, label: '無波段' };
+  const price = candles[n-1].close;
+  // 多頭 OTE：從高點回撤 61.8-78.6%
+  const oUp = high - imp*0.618, oLo = high - imp*0.786;
+  // 空頭 OTE：從低點反彈 61.8-78.6%
+  const oBearUp = low + imp*0.786, oBearLo = low + imp*0.618;
+  if(price >= oLo && price <= oUp)
+    return { score: 10, label: '多 ' + (((high-price)/imp)*100).toFixed(1) + '% 回撤' };
+  if(price >= oBearLo && price <= oBearUp)
+    return { score: 10, label: '空 OTE 反彈區' };
+  return { score: 0, label: '未在OTE區間' };
+}
+
+/* ── 成交量濾網 ── */
+function ictCalcVolume(candles) {
+  const n = candles.length;
+  if(n < 22) return { score: 0, label: '資料不足' };
+  const volMa = candles.slice(-21,-1).reduce((s,c)=>s+(c.volume||0),0)/20;
+  const lastV = candles[n-1].volume || 0;
+  const ratio = volMa > 0 ? lastV/volMa : 1;
+  if(ratio >= 2.0) return { score: 10, label: '×'+ratio.toFixed(1)+' 爆量' };
+  if(ratio >= 1.5) return { score: 10, label: '×'+ratio.toFixed(1)+' 放量' };
+  if(ratio >= 1.0) return { score: 5,  label: '×'+ratio.toFixed(1)+' 正常' };
+  return { score: 0, label: '×'+ratio.toFixed(1)+' 縮量' };
+}
+
+/* ── PO3 階段 + Silver Bullet Killzone ── */
+function ictCalcPO3andKZ(candles) {
+  const n = candles.length;
+  let po3S = 0, po3Label = '--';
+  if(n >= 22) {
+    const volMa = candles.slice(-21,-1).reduce((s,c)=>s+(c.volume||0),0)/20;
+    const last  = candles[n-1];
+    const body  = Math.abs(last.close-last.open);
+    const range = last.high - last.low || 1;
+    if((last.volume||0) > 1.5*volMa && body/range > 0.5) { po3S = 10; po3Label = '✅ 分配階段'; }
+    else if((last.volume||0) < 0.8*volMa && body/range < 0.3) { po3Label = '積累階段'; }
+    else { po3Label = '操控/過渡'; }
+  }
+  const inKZ  = ictCheckKillzone();
+  const kzS   = inKZ ? 10 : 0;
+  const kzLabel = inKZ ? '✅ 在 Killzone 內' : '⬜ 非 Killzone';
+  return { score: po3S + kzS, po3Label, kzLabel, inKZ };
+}
+
+/* ── 主計算函數 ── */
+function ictComputeScore(candles) {
+  if(!candles || candles.length < 30) return null;
+  const fvg    = ictCalcFVG(candles);
+  const ob     = ictCalcOB(candles);
+  const bos    = ictCalcBOS(candles);
+  const ote    = ictCalcOTE(candles);
+  const vol    = ictCalcVolume(candles);
+  const po3kz  = ictCalcPO3andKZ(candles);
+  const raw    = fvg.score + ob.score + bos.score + po3kz.score + ote.score;
+  // SMC 權重調整（20-30% 建議範圍）
+  const adj    = raw * (1 + (ICT_STATE.smcWeight - 0.25) * 0.5);
+  // 成交量額外加分
+  const total  = Math.min(100, Math.max(0, Math.round(adj + vol.score)));
+  const components = { fvg, ob, bos, ote, vol, po3kz,
+    smcPts: fvg.score + ob.score,
+    strPts: bos.score,
+    po3Pts: po3kz.score,
+    otePts: ote.score
+  };
+  ICT_STATE.score      = total;
+  ICT_STATE.components = components;
+  return { totalScore: total, components };
+}
+
+/* ── 渲染評分 ── */
+function ictRenderScore(score, comp) {
+  const CIRC = 138.2;
+  const offset = CIRC - (score/100)*CIRC;
+  const fill   = document.getElementById('ictGaugeFill');
+  const numEl  = document.getElementById('ictScoreNum');
+  const lblEl  = document.getElementById('ictSignalLbl');
+  if(!fill) return;
+  fill.style.strokeDashoffset = offset;
+  let color, cls, sigText;
+  if(score >= 75)      { color='#00e676'; cls='bull'; sigText='⬆ 強烈買入訊號'; }
+  else if(score >= 60) { color='#00d4ff'; cls='bull'; sigText='⬆ 買入觀察中'; }
+  else if(score >= 45) { color='#ffab00'; cls='wait'; sigText='⏸ 等待確認'; }
+  else if(score >= 30) { color='#ff6d00'; cls='wait'; sigText='⚠ 謹慎偏空'; }
+  else                 { color='#ff1744'; cls='bear'; sigText='⬇ 空頭訊號'; }
+  fill.style.stroke   = color;
+  numEl.style.color   = color;
+  numEl.textContent   = score;
+  lblEl.className     = 'ict-signal-lbl ' + cls;
+  lblEl.textContent   = sigText;
+
+  // 六因子
+  const setC = (id, val, cls) => {
+    const e = document.getElementById(id);
+    if(e) { e.textContent = val; e.className = 'ict-comp-val ' + cls; }
+  };
+  setC('ict-fvg', comp.fvg.label,      comp.fvg.score>0  ? 'cyan'   : 'fail');
+  setC('ict-ob',  comp.ob.label,       comp.ob.score>0   ? 'warn'   : 'fail');
+  setC('ict-bos', comp.bos.label,      comp.bos.score>0  ? 'pass'   : 'fail');
+  setC('ict-ote', comp.ote.label,      comp.ote.score>0  ? 'purple' : 'fail');
+  setC('ict-kz',  comp.po3kz.kzLabel,  comp.po3kz.inKZ   ? 'pass'   : 'fail');
+  setC('ict-vol', comp.vol.label,      comp.vol.score>=10? 'pass'   : comp.vol.score>0?'warn':'fail');
+
+  // 評分條
+  const setBar = (bId, sId, pts, max) => {
+    const b = document.getElementById(bId), s = document.getElementById(sId);
+    if(b) b.style.width = Math.min(100,(pts/max*100))+'%';
+    if(s) s.textContent  = pts + '/' + max;
+  };
+  setBar('ict-bar-smc','ict-sc-smc', comp.smcPts, 40);
+  setBar('ict-bar-str','ict-sc-str', comp.strPts, 30);
+  setBar('ict-bar-po3','ict-sc-po3', comp.po3Pts, 20);
+  setBar('ict-bar-ote','ict-sc-ote', comp.otePts, 10);
+}
+
+/* ── 主入口（供外部呼叫）── */
+function ictRunOnCandles(candlesArr) {
+  if(!candlesArr || !candlesArr.length) return;
+  const result = ictComputeScore(candlesArr);
+  if(result) ictRenderScore(result.totalScore, result.components);
+}
+
+/* ── 初始化 ── */
+(function ictInit() {
+  ictCheckKillzone();
+  // 初始設定 TW 高亮
+  const twRow = document.getElementById('ict-kz-tw');
+  if(twRow) twRow.classList.add('active-mkt');
+  // 每分鐘自動更新 Killzone 狀態
+  setInterval(ictCheckKillzone, 60000);
+})();
+
+/* ──────────────────────────────────────────────────────────
+   Hook 整合：攔截現有分析流程，自動餵入 K 線資料
+   本引擎會嘗試從 window.G_CANDLES（現有全域變數）讀取
+   ────────────────────────────────────────────────────────── */
+(function ictHook() {
+  // 定期嘗試從全域 K 線資料更新評分
+  function tryUpdate() {
+    // 常見的全域 K 線變數名稱（依現有程式碼嘗試）
+    const candidates = ['G_CANDLES','gCandles','candles','_candles','barData','klineData'];
+    for(const name of candidates) {
+      const data = window[name];
+      if(Array.isArray(data) && data.length >= 30) {
+        ictRunOnCandles(data);
+        return true;
+      }
+    }
+    return false;
+  }
+  // 分析完成後 1 秒觸發
+  const origCb = window.onAnalysisDone;
+  window.onAnalysisDone = function(...args) {
+    if(origCb) origCb.apply(this, args);
+    setTimeout(tryUpdate, 800);
+  };
+  // 備用：每 3 秒嘗試一次（直到有資料）
+  let attempts = 0;
+  const poll = setInterval(() => {
+    if(tryUpdate() || ++attempts > 20) clearInterval(poll);
+  }, 3000);
+})();
+
 </script>
 </body>
 </html>
