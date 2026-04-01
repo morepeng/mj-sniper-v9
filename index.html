@@ -3856,6 +3856,7 @@ function analyse(d,tk){
   // BEAR市：leadTot 也縮放，避免先行分撐高總分
   const effLead = leadTot * mult;
 
+  
   const dowBonus=dowEngine.tScore*0.6;
   const wyckBonus=wyckEngine.wScore*0.4;
   const ofiBonus=parseFloat(ofiEngine.ofiScore)*0.5;
@@ -3866,7 +3867,7 @@ function analyse(d,tk){
   else if(passN===5)base+=10;
   else if(passN===4)base+=6;
   else if(passN===3&&pass.mac)base+=3;
-  else if(passN===3&&!pass.mac)base-=5; // 個股強但大盤空頭→扣分
+  else if(passN===3&&!pass.mac)base-=5; // 個股強但大盤空頭→扣分  
   else if(passN<=1)base-=12;
   if(!candleOK)base=Math.min(base,55);
   if(risk==='high')base=Math.min(base,52);
