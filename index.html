@@ -875,6 +875,19 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   .app > aside.left.mob-active,
   .app > main.chart-area.mob-active,
   .app > aside.right.mob-active { display: flex !important; }
+  /* 左右欄：縱向排列 + 允許滾動 */
+  .app > aside.left.mob-active,
+  .app > aside.right.mob-active {
+    flex-direction: column !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+  }
+  /* K線圖：不滾動，內容撐滿 */
+  .app > main.chart-area.mob-active {
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
 
   /* ─── 5. Statusbar 隱藏，Tab Bar 在 row3 ─── */
   .app > footer.statusbar { display: none !important; }
@@ -7819,7 +7832,7 @@ window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
    📱 手機 Tab 切換系統
    ══════════════════════════════════════════════ */
 function switchMobTab(tab) {
-  if (window.innerWidth > 768) return;
+  if (!document.getElementById('mobTabbar') || getComputedStyle(document.getElementById('mobTabbar')).display === 'none') return;
 
   const left      = document.querySelector('.app > aside.left');
   const right     = document.querySelector('.app > aside.right');
@@ -7857,8 +7870,10 @@ function switchMobTab(tab) {
 
 // 手機初始化：預設顯示 K線圖
 function initMobileLayout() {
-  if (window.innerWidth <= 768) {
-    // 確保只顯示 chart，隱藏其他
+  const tabbar = document.getElementById('mobTabbar');
+  if (!tabbar) return;
+  const isMob = getComputedStyle(tabbar).display !== 'none';
+  if (isMob) {
     ['aside.left','main.chart-area','aside.right'].forEach(sel => {
       const el = document.querySelector('.app > ' + sel);
       if (el) el.classList.remove('mob-active');
