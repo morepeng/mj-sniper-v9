@@ -898,6 +898,22 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
     transition: transform 0.25s ease, visibility 0s linear 0s !important;
     z-index: 20 !important;
   }
+  /* 左右欄啟用時改為 block，讓 overflow-y scroll 正常 */
+  .app > aside.left.mob-active,
+  .app > aside.right.mob-active {
+    display: block !important;
+    height: calc(100dvh - 104px) !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+  }
+  /* 內部所有 section 不限高 */
+  .app > aside.left.mob-active .sec,
+  .app > aside.right.mob-active .sec {
+    flex-shrink: 0 !important;
+    width: 100% !important;
+  }
 
   /* ─── 5. Statusbar 隱藏，Tab Bar 在 row3 ─── */
   .app > footer.statusbar { display: none !important; }
@@ -916,7 +932,25 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 
   /* ─── 6. 內容元素全寬 ─── */
   .sec { padding: 10px 12px !important; }
-  .dec-box, .sl-box, .dec-wrap { max-width: 100% !important; }
+  /* AI決策內容在手機不限高 */
+  #realAiContent {
+    max-height: none !important;
+    overflow-y: visible !important;
+  }
+  /* 技術面按鈕可點擊 */
+  .app > aside.right.mob-active button,
+  .app > aside.right.mob-active input,
+  .app > aside.right.mob-active select,
+  .app > aside.right.mob-active a,
+  .app > aside.left.mob-active button,
+  .app > aside.left.mob-active input,
+  .app > aside.left.mob-active select {
+    touch-action: auto !important;
+    pointer-events: auto !important;
+    position: relative !important;
+    z-index: 1 !important;
+  }
+  .dec-box, .sl-box, .dec-wrap { max-width: 100% !important; min-height: auto !important; }
   .warn-item { word-break: break-word !important; }
   .tech-grid { grid-template-columns: 1fr 1fr !important; }
   .main-wrap { min-height: 200px !important; }
