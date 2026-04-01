@@ -211,7 +211,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 
 /* ── Main Chart ── */
 .main-wrap{flex:1;position:relative;min-height:300px}
-#mainChart{width:100%;height:100%}
+#mainChart{width:100%;height:100%;touch-action:none}
 
 /* ── Sub Chart ── */
 .sub-section{height:110px;border-top:1px solid #0e1f33;flex-shrink:0;display:flex;flex-direction:column}
@@ -876,6 +876,20 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   .app > main.chart-area.mob-active,
   .app > aside.right.mob-active { display: flex !important; }
 
+  /* ─── 手機各欄滑動修正 ─── */
+  .app > aside.left.mob-active,
+  .app > aside.right.mob-active {
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    flex-direction: column !important;
+  }
+  .app > main.chart-area.mob-active {
+    overflow: hidden !important;
+    touch-action: pan-y !important;
+  }
+
   /* ─── 5. Statusbar 隱藏，Tab Bar 在 row3 ─── */
   .app > footer.statusbar { display: none !important; }
   .mob-tabbar {
@@ -1107,7 +1121,7 @@ input#ictSmcWeight{accent-color:#00d4ff;cursor:pointer;flex:1}
 
       <!-- 內容 -->
       <div id="realAiContent" style="padding:8px;font-size:.6rem;line-height:1.65;
-           color:#8ab4d0;min-height:40px;max-height:280px;overflow-y:auto">
+           color:#8ab4d0;min-height:40px;max-height:280px;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain">
         <span style="color:#5a8aaa">等待分析完成後自動生成...</span>
       </div>
 
@@ -8222,6 +8236,26 @@ function ictRunOnCandles(candlesArr) {
   }, 3000);
 })();
 
+
+// ── 手機左右滑動切換 Tab ──
+(function(){
+  const TABS = ['left','chart','right'];
+  let tsX=0, tsY=0;
+  document.addEventListener('touchstart', e=>{
+    tsX = e.touches[0].clientX;
+    tsY = e.touches[0].clientY;
+  }, {passive:true});
+  document.addEventListener('touchend', e=>{
+    if(window.innerWidth > 768) return;
+    const dx = e.changedTouches[0].clientX - tsX;
+    const dy = e.changedTouches[0].clientY - tsY;
+    if(Math.abs(dx) < 50 || Math.abs(dy) > Math.abs(dx)*0.8) return;
+    const cur = window._mobActiveTab || 'chart';
+    const idx = TABS.indexOf(cur);
+    if(dx < 0 && idx < TABS.length-1) switchMobTab(TABS[idx+1]); // 左滑 → 下一個
+    if(dx > 0 && idx > 0) switchMobTab(TABS[idx-1]);             // 右滑 → 上一個
+  }, {passive:true});
+})();
 </script>
 </body>
 </html>
