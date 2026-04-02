@@ -1120,10 +1120,6 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
       <div class="li-icon">🕯</div><div class="li-name">第五層：K線確認</div>
       <div class="li-badge wait" id="lb-can">待分析</div>
     </div>
-    <div class="layer-item"><div class="li-icon">🧠</div><div class="li-name">ICT / SMC</div><div class="li-badge wait" id="lb-ict">---</div></div>
-    <div class="layer-item"><div class="li-icon">📈</div><div class="li-name">道氏引擎</div><div class="li-badge wait" id="lb-dow">---</div></div>
-    <div class="layer-item"><div class="li-icon">📦</div><div class="li-name">威科夫</div><div class="li-badge wait" id="lb-wyck">---</div></div>
-    <div class="layer-item"><div class="li-icon">🌊</div><div class="li-name">OFI</div><div class="li-badge wait" id="lb-ofi">---</div></div>
     <div id="filterConclusion" style="margin-top:6px;padding:5px 8px;border-radius:4px;font-size:.61rem;display:none;font-weight:700;text-align:center"></div>
   </div>
 
@@ -1250,7 +1246,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 <main class="chart-area">
   <div class="loading" id="loading">
     <div class="spin"></div>
-    <div class="ld-text" id="ldTxt">初始化六層分析引擎</div>
+    <div class="ld-text" id="ldTxt">初始化九層分析引擎</div>
     <div class="ld-steps" id="ldSteps"></div>
   </div>
 
@@ -3754,7 +3750,7 @@ function analyse(d,tk){
     return { ofi, ofiScore:ofiScore.toFixed(2), cvdTrend:cvdTrend.toFixed(0), poc:poc.toFixed(2), absorption, absorptionBias, note:`OFI ${ofiScore.toFixed(1)} / CVD ${cvdTrend.toFixed(0)} / POC ${poc.toFixed(2)}${absorption?` / 吸收${absorptionBias}`:''}` };
   })();
 
-  const ictPass = (typeof ICTSTATE!=='undefined' && ICTSTATE.score>=60);
+  const ictPass=(typeof ICTSTATE!=='undefined'&&ICTSTATE.score>=60);
   const pass={
     mac: macro!=='BEAR'&&macro!=='WEAK_BEAR',
     lead: leadTot>=5,
@@ -3766,26 +3762,26 @@ function analyse(d,tk){
     ofi: parseFloat(ofiEngine.ofiScore)>=1.5
   };
   const passN=Object.values(pass).filter(Boolean).length;
-
-  const effLead = leadTot * mult;
-  const ictBonus = typeof ICTSTATE!=='undefined' ? ((ICTSTATE.score-50)*0.10) : 0;
-  const dowBonus = dowEngine.tScore * 0.6;
-  const wyckBonus = wyckEngine.wScore * 0.4;
-  const ofiBonus = parseFloat(ofiEngine.ofiScore) * 0.5;
+  const effLead=leadTot*mult;
+  const ictBonus=typeof ICTSTATE!=='undefined'?((ICTSTATE.score-50)*0.10):0;
+  const dowBonus=dowEngine.tScore*0.6;
+  const wyckBonus=wyckEngine.wScore*0.4;
+  const ofiBonus=parseFloat(ofiEngine.ofiScore)*0.5;
 
   let base=50 + techSc*mult + effLead*1.2 + fundWeight*0.5 + ictBonus + dowBonus + wyckBonus + ofiBonus;
-  if(passN>=7) base+=18;
-  else if(passN===6) base+=14;
-  else if(passN===5) base+=10;
-  else if(passN===4) base+=6;
-  else if(passN===3&&pass.mac) base+=3;
-  else if(passN===3&&!pass.mac) base-=5;
-  else if(passN<=1) base-=12;
-  if(!candleOK) base=Math.min(base,55);
-  if(risk==='high') base=Math.min(base,52);
-  if(macro==='BEAR') base=Math.min(base,42);
-  else if(macro==='WEAK_BEAR') base=Math.min(base,52);
+  if(passN>=7)base+=18;
+  else if(passN===6)base+=14;
+  else if(passN===5)base+=10;
+  else if(passN===4)base+=6;
+  else if(passN===3&&pass.mac)base+=3;
+  else if(passN===3&&!pass.mac)base-=5;
+  else if(passN<=1)base-=12;
+  if(!candleOK)base=Math.min(base,55);
+  if(risk==='high')base=Math.min(base,52);
+  if(macro==='BEAR')base=Math.min(base,42);
+  else if(macro==='WEAK_BEAR')base=Math.min(base,52);
 function updLayers(a){
+  ensureNineLayerBadges();
   [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],['lb-tech',a.pass.tech,`${a.techSc>=0?'+':''}${a.techSc}`],['lb-can',a.pass.can,a.entry],['lb-ict',typeof ICTSTATE!=='undefined'&&ICTSTATE.score>=60,typeof ICTSTATE!=='undefined'?`${ICTSTATE.score}/100`:'---']].forEach(([id,p,v])=>{
     const el=$(id); if(!el)return; el.className='li-badge '+(p?'pass':'fail'); el.textContent=p?v:'---';
   });
