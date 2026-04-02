@@ -3941,6 +3941,26 @@ function injectSafePlusIntoAnalysis(a){
 
 
 
+
+function injectFromTechDepthPanel(){
+  try{
+    const texts = Array.from(document.querySelectorAll('.right .tc')).map(el => (el.innerText||'').replace(/\s+/g,' ').trim()).filter(Boolean);
+    const set=(id, ok, txt)=>{ const el=$(id); if(!el) return; el.className='li-badge '+(ok?'pass':'fail'); el.textContent=txt?String(txt).slice(0,18):'---'; el.title=txt||'---'; };
+    let dow='', wyck='', ofi='';
+    texts.forEach(t=>{
+      if(!dow && /道氏趨勢/i.test(t)) dow = t.replace(/^道氏趨勢\s*/,'').trim();
+      if(!wyck && /威科夫/i.test(t)) wyck = t.replace(/^威科夫\s*/,'').trim();
+      if(!ofi && /OFI/i.test(t)) ofi = t.replace(/^OFI[^\s]*\s*/,'').trim() || t.trim();
+    });
+    if(dow){ set('sp-dow', true, dow); set('lb-dow', true, dow); }
+    if(wyck){ set('sp-wyck', true, wyck); set('lb-wyck', true, wyck); }
+    if(ofi){ set('sp-ofi', true, ofi); set('lb-ofi', true, ofi); }
+    const ictTxt = (typeof ICTSTATE!=='undefined' && ICTSTATE && typeof ICTSTATE.score!=='undefined') ? `ICT ${ICTSTATE.score}/100` : 'ICT 未注入';
+    set('sp-ict', /\d+\/100/.test(ictTxt), ictTxt); set('lb-ict', /\d+\/100/.test(ictTxt), ictTxt);
+    const meta=$('sp-meta'); if(meta){ meta.innerHTML = `技術深度回填：${dow?'Dow✓':'Dow×'} / ${wyck?'Wyck✓':'Wyck×'} / ${ofi?'OFI✓':'OFI×'}<br>${dow||'未抓到道氏'}<br>${wyck||'未抓到威科夫'}<br>${ofi||'未抓到 OFI'}`; }
+    console.log('[safe-plus-techdepth]', {texts, dow, wyck, ofi, ict:ictTxt});
+  } catch(e){ console.warn('[safe-plus-techdepth] fail', e); }
+}
 function injectFromVisibleWarnings(){
   try{
     const items = Array.from(document.querySelectorAll('#warnList .warn-item')).map(el => (el.textContent||'').trim());
@@ -7597,7 +7617,7 @@ window.quickTk = function(t){
 
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
-  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); injectFromVisibleWarnings(); },800);initCharts();updAlerts();
+  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); injectFromVisibleWarnings(); injectFromTechDepthPanel(); },800);initCharts();updAlerts();
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
