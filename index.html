@@ -1203,7 +1203,9 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 <div class="layer-item"><div class="li-icon">📈</div><div class="li-name">道氏引擎</div><div class="li-badge wait" id="sp-dow">---</div></div>
 <div class="layer-item"><div class="li-icon">📦</div><div class="li-name">威科夫</div><div class="li-badge wait" id="sp-wyck">---</div></div>
 <div class="layer-item"><div class="li-icon">🌊</div><div class="li-name">OFI</div><div class="li-badge wait" id="sp-ofi">---</div></div>
-<div id="sp-meta" style="margin-top:6px;font-size:.6rem;color:#5a8aa8;line-height:1.5"></div></div><div class="sec filter-panel" id="filterPanel">
+<div id="sp-meta" style="margin-top:6px;font-size:.6rem;color:#5a8aa8;line-height:1.5"></div></div><div class="sec" id="safePlusMirror"><div class="sec-title">九層鏡像</div>
+<div id="sp-mirror" style="display:grid;grid-template-columns:1fr;gap:6px"></div>
+<div style="margin-top:6px;font-size:.58rem;color:#5a8aa8;line-height:1.5">直接鏡像右側「技術深度」卡片內容，避免 badge 解析失敗。</div></div><div class="sec filter-panel" id="filterPanel">
     <div class="sec-title">🔬 智能過濾器 <span class="v9-badge">v9 NEW</span></div>
     <div class="filter-grid" id="filterGrid">
       <div class="fc" id="fc-trend"><div class="fc-icon">📈</div><div class="fc-name">趨勢確認</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
@@ -3942,6 +3944,16 @@ function injectSafePlusIntoAnalysis(a){
 
 
 
+
+function mirrorTechDepthCards(){
+  try{
+    const wrap = $('sp-mirror'); if(!wrap) return;
+    const cards = Array.from(document.querySelectorAll('.right .tc'));
+    if(!cards.length){ wrap.innerHTML = '<div style="font-size:.62rem;color:#ffab00">未抓到技術深度卡片</div>'; return; }
+    wrap.innerHTML = cards.map(c => `<div style="background:#09121f;border:1px solid #1a3550;border-radius:4px;padding:7px;font-size:.64rem;line-height:1.5;color:#cfe0ee;white-space:pre-wrap">${(c.innerText||'').trim()}</div>`).join('');
+    console.log('[safe-plus-mirror]', cards.length);
+  } catch(e){ console.warn('[safe-plus-mirror] fail', e); }
+}
 function injectFromTechDepthPanel(){
   try{
     const texts = Array.from(document.querySelectorAll('.right .tc')).map(el => (el.innerText||'').replace(/\s+/g,' ').trim()).filter(Boolean);
@@ -7617,7 +7629,7 @@ window.quickTk = function(t){
 
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
-  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); injectFromVisibleWarnings(); injectFromTechDepthPanel(); },800);initCharts();updAlerts();
+  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); injectFromVisibleWarnings(); injectFromTechDepthPanel(); mirrorTechDepthCards(); },800);initCharts();updAlerts();
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
