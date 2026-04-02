@@ -3984,6 +3984,19 @@ function updLSTM(a){
 }
 
 
+
+function dumpRightTechDepthText(){
+  try{
+    const grid = $('leftTechDepthGrid'); if(!grid) return;
+    if(grid.children.length>0 && !/尚未抓到/.test(grid.innerText||'')) return;
+    const secs = Array.from(document.querySelectorAll('.right .sec'));
+    const targetSec = secs.find(sec => (sec.querySelector('.sec-title')?.innerText||'').includes('技術深度'));
+    const txt = (targetSec?.innerText||'').trim();
+    if(txt){
+      grid.innerHTML = `<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側技術深度原文</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">${txt}</div></div>`;
+    }
+  } catch(e){}
+}
 function ensureLeftTechDepthVisible(){
   try{
     let box = $('leftTechDepthFloat');
@@ -4002,7 +4015,13 @@ function updLeftTechDepthFromRight(){
     ensureLeftTechDepthVisible();
     const grid = $('leftTechDepthGrid');
     if(!grid) return;
-    let html = $('techGrid')?.innerHTML || '';
+    let html = '';
+    const secs = Array.from(document.querySelectorAll('.right .sec'));
+    const targetSec = secs.find(sec => (sec.querySelector('.sec-title')?.innerText||'').includes('技術深度'));
+    if(targetSec){
+      const content = targetSec.querySelector('#techGrid, .tech-grid') || targetSec;
+      html = content.innerHTML || '';
+    }
     if(!html.trim()){
       const rg = document.querySelector('.right #techGrid') || document.querySelector('.right .tech-grid') || document.querySelectorAll('.tech-grid')[1];
       html = rg?.innerHTML || '';
@@ -4012,8 +4031,8 @@ function updLeftTechDepthFromRight(){
       html = cards;
     }
     if(html.trim()) grid.innerHTML = html;
-    else grid.innerHTML = '<div class="tc"><div class="tc-lbl">狀態</div><div class="tc-val amber">尚未抓到右側卡片</div><div class="tc-sub">等待 techGrid / .right .tc</div></div>';
-    console.log('[left-techdepth-mirror]', {copied: !!html.trim(), len: html.length, rightCards: document.querySelectorAll('.right .tc').length});
+    else grid.innerHTML = '<div class="tc"><div class="tc-lbl">狀態</div><div class="tc-val amber">尚未抓到右側技術深度</div><div class="tc-sub">可能是標題或容器結構不同</div></div>';
+    console.log('[left-techdepth-mirror]', {copied: !!html.trim(), len: html.length, rightSecs: secs.length, rightCards: document.querySelectorAll('.right .tc').length});
   } catch(e){ console.warn('[updLeftTechDepthFromRight] fail', e); }
 }
 
@@ -7617,4 +7636,4 @@ window.installPWA = async ()=>{
 
 window.addEventListener('load', ()=>setTimeout(ensureLeftTechDepthVisible, 600));
 window.addEventListener('resize', ensureLeftTechDepthVisible);
-setInterval(()=>{ try{ ensureLeftTechDepthVisible(); if($('techGrid')?.innerHTML) updLeftTechDepthFromRight(); }catch(e){} }, 2500);
+setInterval(()=>{ try{ ensureLeftTechDepthVisible(); updLeftTechDepthFromRight(); dumpRightTechDepthText(); }catch(e){} }, 2500);
