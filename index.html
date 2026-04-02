@@ -1600,9 +1600,9 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   </div>
 </div>
 
-<div id="leftTechDepthFloat" style="position:fixed;left:8px;top:58px;width:260px;max-height:78vh;overflow:auto;z-index:999999;background:#070e19;border:2px solid #00d4ff;border-radius:8px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto">
+<div id="leftTechDepthFloat" style="position:fixed;left:8px;top:58px;width:260px;max-height:78vh;overflow:auto;z-index:999999;background:#070e19;border:2px solid #00d4ff;border-radius:8px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.55)">
 <div style="font-family:var(--ft);font-size:.75rem;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px">左側技術深度</div>
-<div id="leftTechDepthGrid" class="tech-grid"><div class="tc" style="grid-column:1/-1"><div class="tc-lbl">初始化</div><div class="tc-val cyancolor">左側技術深度模組已載入</div><div class="tc-sub">若一直只看到這行，表示鏡像函式沒執行</div></div></div>
+<div id="leftTechDepthGrid" class="tech-grid"></div>
 </div><div class="toast-stack" id="toasts"></div>
 
 <script>
@@ -3984,89 +3984,26 @@ function updLSTM(a){
 }
 
 
-
-
-function forceMirrorRightTechDepth(){
+function updLeftTechDepthDirect(a){
   try{
-    ensureLeftTechDepthVisible();
-    const box = $('leftTechDepthFloat');
-    const grid = $('leftTechDepthGrid');
-    if(!box || !grid) return false;
+    const box = $('leftTechDepthFloat'), grid = $('leftTechDepthGrid');
+    if(!box || !grid || !a) return;
     box.style.display='block'; box.style.visibility='visible'; box.style.opacity='1';
-    let txt='';
-    const right = document.querySelector('aside.right');
-    const sec = Array.from(document.querySelectorAll('aside.right .sec')).find(s => (s.innerText||'').includes('技術深度'));
-    if(sec) txt = (sec.innerText||'').trim();
-    if(!txt){
-      const titles = Array.from(document.querySelectorAll('.sec-title')).map(el => (el.innerText||'').trim());
-      const idx = titles.findIndex(t => t.includes('技術深度'));
-      if(idx>=0){
-        const sec2 = document.querySelectorAll('.sec')[idx];
-        txt = (sec2?.innerText||'').trim();
-      }
-    }
-    if(!txt && right) txt = (right.innerText||'').trim();
-    if(txt && txt.length>20){
-      grid.innerHTML = '<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側技術深度鏡像</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">'+txt.slice(0,1400).replace(/</g,'&lt;')+'</div></div>';
-      console.log('[forceMirrorRightTechDepth] ok', txt.length);
-      return true;
-    }
-    console.log('[forceMirrorRightTechDepth] pending');
-    return false;
-  } catch(e){ console.warn('[forceMirrorRightTechDepth] fail', e); return false; }
+    const cells = [
+      ['道氏趨勢', a.dow||'---', a.dow==='Bullish'?'bull':a.dow==='Bearish'?'bear':'amber', ''],
+      ['威科夫', a.wyck||'---', 'purple', ''],
+      ['多頭機率', a.bayes?`${a.bayes}%`:'---', parseFloat(a.bayes)>=60?'bull':parseFloat(a.bayes)<=40?'bear':'amber', ''],
+      ['OFI 估算流', a.ofi||'---', (a.ofi||'').includes('Bull')?'bull':(a.ofi||'').includes('Bear')?'bear':'amber', ''],
+      ['SuperTrend', a.stSig||'---', (a.stSig||'').includes('Bull')?'bull':'bear', ''],
+      ['TTM Squeeze', a.ttm||'---', (a.ttm||'').includes('擠壓')?'amber':'bull', ''],
+      ['假突破偵測', a.fakeBreak?'有':'無', a.fakeBreak?'bear':'bull', ''],
+      ['K線評分', String(a.canSc ?? '---'), (a.canSc||0)>=4?'bull':(a.canSc||0)<0?'bear':'amber', a.risk||''],
+      ['形態淨分', ((a.patBuy||0)-(a.patSell||0)).toFixed?.(1) ?? '---', ((a.patBuy||0)-(a.patSell||0))>0?'bull':((a.patBuy||0)-(a.patSell||0))<0?'bear':'amber', (a.patSigsShort||[]).join(' / ')]
+    ];
+    grid.innerHTML = cells.map(([l,v,c,s]) => `<div class="tc"><div class="tc-lbl">${l}</div><div class="tc-val ${c}">${v}</div>${s?`<div class="tc-sub">${s}</div>`:''}</div>`).join('');
+    console.log('[updLeftTechDepthDirect] rendered', a.dow, a.wyck, a.bayes);
+  } catch(e){ console.warn('[updLeftTechDepthDirect] fail', e); }
 }
-
-function dumpRightTechDepthText(){
-  try{
-    const grid = $('leftTechDepthGrid'); if(!grid) return;
-    if(grid.children.length>0 && !/尚未抓到/.test(grid.innerText||'')) return;
-    const secs = Array.from(document.querySelectorAll('.right .sec'));
-    const targetSec = secs.find(sec => (sec.querySelector('.sec-title')?.innerText||'').includes('技術深度'));
-    const txt = (targetSec?.innerText||'').trim();
-    if(txt){
-      grid.innerHTML = `<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側技術深度原文</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">${txt}</div></div>`;
-    }
-  } catch(e){}
-}
-function ensureLeftTechDepthVisible(){
-  try{
-    let box = $('leftTechDepthFloat');
-    if(!box){
-      box = document.createElement('div');
-      box.id='leftTechDepthFloat';
-      box.style.cssText='position:fixed;left:8px;top:58px;width:260px;max-height:78vh;overflow:auto;z-index:999999;background:#070e19;border:2px solid #00d4ff;border-radius:8px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:block;visibility:visible;opacity:1;pointer-events:auto';
-      box.innerHTML='<div style="font-family:var(--ft);font-size:.75rem;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px">左側技術深度</div><div id="leftTechDepthGrid" class="tech-grid"></div>';
-      document.body.appendChild(box);
-    }
-    box.style.display='block'; box.style.visibility='visible'; box.style.opacity='1';
-  } catch(e){ console.warn('[leftTechDepthVisible] fail', e); }
-}
-function updLeftTechDepthFromRight(){
-  try{
-    ensureLeftTechDepthVisible();
-    const grid = $('leftTechDepthGrid');
-    if(!grid) return;
-    let html = '';
-    const secs = Array.from(document.querySelectorAll('.right .sec'));
-    const targetSec = secs.find(sec => (sec.querySelector('.sec-title')?.innerText||'').includes('技術深度'));
-    if(targetSec){
-      const content = targetSec.querySelector('#techGrid, .tech-grid') || targetSec;
-      html = content.innerHTML || '';
-    }
-    if(!html.trim()){
-      const rg = document.querySelector('.right #techGrid') || document.querySelector('.right .tech-grid') || document.querySelectorAll('.tech-grid')[1];
-      html = rg?.innerHTML || '';
-    }
-    if(!html.trim()){
-      const cards = Array.from(document.querySelectorAll('.right .tc')).map(el=>el.outerHTML).join('');
-      html = cards;
-    }
-    if(html.trim()) grid.innerHTML = html;
-    else grid.innerHTML = '<div class="tc"><div class="tc-lbl">狀態</div><div class="tc-val amber">尚未抓到右側技術深度</div><div class="tc-sub">可能是標題或容器結構不同</div></div>';
-    console.log('[left-techdepth-mirror]', {copied: !!html.trim(), len: html.length, rightSecs: secs.length, rightCards: document.querySelectorAll('.right .tc').length});
-  } catch(e){ console.warn('[updLeftTechDepthFromRight] fail', e); }
-}
-
 function updTech(a){
   const patNet=(a.patBuy||0)-(a.patSell||0);
   const patStr=patNet>0?`+${patNet}看漲`:patNet<0?`${patNet}看跌`:'中性';
@@ -7664,34 +7601,3 @@ window.installPWA = async ()=>{
 </script>
 </body>
 </html>
-
-window.addEventListener('load', ()=>setTimeout(ensureLeftTechDepthVisible, 600));
-window.addEventListener('resize', ensureLeftTechDepthVisible);
-setInterval(()=>{ try{ ensureLeftTechDepthVisible(); updLeftTechDepthFromRight(); dumpRightTechDepthText(); }catch(e){} }, 2500);
-
-
-document.addEventListener('DOMContentLoaded', ()=>{
-  try{
-    ensureLeftTechDepthVisible();
-    setTimeout(forceMirrorRightTechDepth, 800);
-    setTimeout(forceMirrorRightTechDepth, 1800);
-    const right = document.querySelector('aside.right');
-    if(right){
-      const mo = new MutationObserver(()=>{ forceMirrorRightTechDepth(); });
-      mo.observe(right, {childList:true, subtree:true, characterData:true});
-    }
-  } catch(e){}
-});
-
-
-(function(){
-  const kick = ()=>{ try{ ensureLeftTechDepthVisible(); forceMirrorRightTechDepth(); }catch(e){} };
-  document.addEventListener('DOMContentLoaded', kick);
-  window.addEventListener('load', kick);
-  setTimeout(kick, 500);
-  setTimeout(kick, 1200);
-  setTimeout(kick, 2500);
-  setTimeout(kick, 5000);
-  setInterval(kick, 2000);
-  document.addEventListener('click', ()=>setTimeout(kick,300), true);
-})();
