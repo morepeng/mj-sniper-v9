@@ -923,9 +923,24 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   .main-wrap { min-height: 200px !important; }
   .sub-section { height: 85px !important; }
   .lstm-row, .lstm-price { font-size: .6rem !important; }
+
+  /* ── 手機側欄滾動時解除 body overflow 鎖定 ── */
+  body.mob-side-active {
+    overflow: hidden !important;
+  }
+  .app > aside.left.mob-active,
+  .app > aside.right.mob-active {
+    /* iOS Safari 捲動修正：-webkit-overflow-scrolling 必須配合下方 JS */
+    overflow-y: scroll !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    /* 確保觸控事件不被父層攔截 */
+    touch-action: pan-y !important;
+  }
+
 }
 
-/* ─── 手機橫式 ─── */
+
 @media screen and (max-width: 900px) and (orientation: landscape) {
   .app {
     position: fixed !important;
@@ -7702,7 +7717,8 @@ window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
    📱 手機 Tab 切換系統
    ══════════════════════════════════════════════ */
 function switchMobTab(tab) {
-  const tb = document.getElementById('mobTabbar'); if (!tb || getComputedStyle(tb).display === 'none') return;
+  const tb = document.getElementById('mobTabbar');
+  if (!tb || getComputedStyle(tb).display === 'none') return;
 
   const left      = document.querySelector('.app > aside.left');
   const right     = document.querySelector('.app > aside.right');
@@ -7725,17 +7741,30 @@ function switchMobTab(tab) {
   if (activeBtn) activeBtn.classList.add('active');
   window._mobActiveTab = tab;
 
+  // 側欄（AI決策/技術面）：允許觸控捲動
+  if (tab === 'chart') {
+    document.body.style.touchAction = '';
+  } else {
+    // 確保側欄捲動不被 body 攔截
+    if (target) {
+      target.scrollTop = 0;
+      // iOS 強制刷新捲動上下文
+      target.style.webkitOverflowScrolling = 'auto';
+      requestAnimationFrame(() => {
+        target.style.webkitOverflowScrolling = 'touch';
+      });
+    }
+  }
+
   // 切換到圖表時強制 resize
   if (tab === 'chart' && chartArea) {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
-      if (G.lwMain) {
+      if (window.G && G.lwMain) {
         G.lwMain.applyOptions({ width: chartArea.clientWidth || window.innerWidth });
       }
     }, 80);
   }
-  // 切換面板時滾回頂部
-  if (target && tab !== 'chart') target.scrollTop = 0;
 }
 
 // 手機初始化：預設顯示 K線圖
