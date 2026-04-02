@@ -1246,7 +1246,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 <main class="chart-area">
   <div class="loading" id="loading">
     <div class="spin"></div>
-    <div class="ld-text" id="ldTxt">初始化九層融合顯示（安全版）</div>
+    <div class="ld-text" id="ldTxt">初始化六層分析引擎</div>
     <div class="ld-steps" id="ldSteps"></div>
   </div>
 
@@ -3866,30 +3866,90 @@ function ensureNineLayerBadgesFull(){
   });
 }
 
+function injectSafePlusIntoAnalysis(a){
+  if(!a || typeof a!=='object') return a;
+  try{
+    const last=a.last||0, ma20=a.ma20||0, ma50=a.ma50||0, ma200=a.ma200||0, rsiV=a.rsiV||50, mfiV=a.mfiV||50;
+    const leadTot=a.leadTot||0, L1=a.L1||0, L2=a.L2||0, L3=a.L3||0, L4=a.L4||0, L5=a.L5||0, histV=(a.histV==null?0:a.histV);
+    const stBull=!!(a.stV && a.stV.t>0);
+    const dowEngine=(function(){
+      let tScore=0;
+      if(ma20&&ma50&&ma200){
+        if(last>ma20 && ma20>ma50 && ma50>ma200) tScore+=3;
+        else if(last<ma20 && ma20<ma50 && ma50<ma200) tScore-=3;
+      }
+      if(stBull) tScore+=2; else tScore-=1;
+      if(histV>0) tScore+=1; else if(histV<0) tScore-=1;
+      if(leadTot>=5) tScore+=1; else if(leadTot<=-5) tScore-=1;
+      const dow=tScore>=2?'Bullish':tScore<=-2?'Bearish':'Neutral';
+      const dowPhase=tScore>=6?'強升趨勢':tScore>=3?'升勢確認':tScore>=0?'整理偏多':tScore>=-3?'整理偏空':'下降趨勢';
+      return { dow, dowPhase, tScore, note:`趨勢分數 ${tScore}` };
+    })();
+    const wyckEngine=(function(){
+      let wScore=0;
+      if(L3>=2) wScore+=2; else if(L3<=-2) wScore-=2;
+      if(L5>=2) wScore+=2; else if(L5<=-2) wScore-=2;
+      if(rsiV<35) wScore+=1; else if(rsiV>70) wScore-=1;
+      if(mfiV<30) wScore+=1; else if(mfiV>70) wScore-=1;
+      if(ma200){ if(last>ma200*1.06) wScore+=1; else if(last<ma200*0.94) wScore-=1; }
+      let wyck='Range', wyckBias='neutral';
+      if(L3<=-3&&L5<=-2){ wyck='Phase A'; wyckBias='neutral'; }
+      else if(L3<=-1&&L5<=0){ wyck='Phase B'; wyckBias='neutral'; }
+      else if(L2>=2&&rsiV<35){ wyck='Phase C'; wyckBias='bull'; }
+      else if(L3>=2&&L5>=2){ wyck='Phase D'; wyckBias='bull'; }
+      else if(ma200 && last>ma200*1.06){ wyck='Mark-up'; wyckBias='bull'; }
+      else if(ma200 && last<ma200*0.94){ wyck='Mark-down'; wyckBias='bear'; }
+      return { wyck, wyckBias, wScore, note:`${wyck} / 結構分數 ${wScore}`, springSig:(wyck==='Phase C'), sosSig:(wyck==='Phase D') };
+    })();
+    const ofiEngine=(function(){
+      let ofiScore=(histV>0?2:-2)+(L1>0?1:-1)+(L3>0?1:-1)+(stBull?1:-1);
+      if(Math.abs(histV)<0.05) ofiScore += 1;
+      ofiScore=Math.max(-10, Math.min(10, ofiScore));
+      const ofi=ofiScore>=1.5?'Bullish':ofiScore<=-1.5?'Bearish':'Neutral';
+      return { ofi, ofiScore:ofiScore.toFixed(2), cvdTrend:leadTot, poc:(last&&last.toFixed?last.toFixed(2):String(last)), absorption:false, absorptionBias:null, note:`OFI ${ofiScore.toFixed(1)} / 結構 ${leadTot}` };
+    })();
+    a.dowEngine=dowEngine; a.dow=dowEngine.dow; a.dowPhase=dowEngine.dowPhase; a.dowNote=dowEngine.note;
+    a.wyckEngine=wyckEngine; a.wyck=wyckEngine.wyck; a.wyckNote=wyckEngine.note;
+    a.ofiEngine=ofiEngine; a.ofi=ofiEngine.ofi; a.ofiNote=ofiEngine.note;
+    const ictPass=typeof ICTSTATE!=='undefined' && ICTSTATE.score>=60;
+    a.pass = Object.assign({}, a.pass||{}, { ict: ictPass, dow: dowEngine.tScore>=2, wyck: wyckEngine.wyckBias==='bull', ofi: parseFloat(ofiEngine.ofiScore)>=1.5 });
+    a.passN = Object.values(a.pass).filter(Boolean).length;
+    if(!Array.isArray(a.warns)) a.warns=[];
+    const add=(t,m)=>{ if(!a.warns.some(w=>String(w.m||'')===String(m))) a.warns.push({t,m}); };
+    add('info', `道氏：${a.dowPhase}（${a.dowNote}）`);
+    add('info', `威科夫：${a.wyck}（${a.wyckNote}）`);
+    add('info', `${a.ofiNote}`);
+    if(a.pass.dow && last>ma20) add('pos', '道氏趨勢確認，價格站上 MA20');
+    if(a.pass.wyck) add('pos', `威科夫偏多：${a.wyck}`);
+    if(a.pass.ofi) add('pos', `OFI 偏多：${a.ofiEngine.ofiScore}`);
+    if(wyckEngine.springSig) add('pos', '可能出現 Spring / 測試低點');
+    if(wyckEngine.sosSig) add('pos', '可能出現 SOS / 強勢脫離整理');
+  }catch(e){ console.warn('injectSafePlusIntoAnalysis failed', e); }
+  return a;
+}
+
 function updLayers(a){
   ensureNineLayerBadgesFull();
   [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],['lb-tech',a.pass.tech,`${a.rsiV?.toFixed?.(0)??'--'} RSI`],['lb-can',a.pass.can,a.entry],['lb-ict',typeof ICTSTATE!=='undefined'&&ICTSTATE.score>=60,typeof ICTSTATE!=='undefined'?`${ICTSTATE.score}/100`:'---']].forEach(([id,p,v])=>{
     const el=$(id); if(!el)return; el.className='li-badge '+(p?'pass':'fail'); el.textContent=p?v:'---';
   });
-  const inferDow = a.dow || (a.ma20>a.ma50&&a.last>a.ma200?'Bullish':'Bearish');
-  const inferWyck = a.wyck || (a.L3<=-3&&a.L5<=-2?'Phase A':a.L3<=-1&&a.L5<=0?'Phase B':a.L2>=2&&a.rsiV<35?'Phase C':a.L3>=2&&a.L5>=2?'Phase D':a.last>a.ma200*1.06?'Mark-up':'Range');
-  const inferOfi = a.ofi || (a.histV!=null?(a.histV>0?'Bullish':'Bearish'):'Neutral');
-  const lbD=$('lb-dow'); if(lbD){ const ok = /Bull/i.test(String(inferDow)); lbD.className='li-badge '+(ok?'pass':'fail'); lbD.textContent=inferDow; }
-  const lbW=$('lb-wyck'); if(lbW){ const ok = /Phase C|Phase D|Mark-up/i.test(String(inferWyck)); lbW.className='li-badge '+(ok?'pass':'fail'); lbW.textContent=inferWyck; }
-  const lbO=$('lb-ofi'); if(lbO){ const ok = /Bull/i.test(String(inferOfi)); lbO.className='li-badge '+(ok?'pass':'fail'); lbO.textContent=inferOfi; }
-
-  const extraPass = { dow:/Bull/i.test(String(inferDow)), wyck:/Phase C|Phase D|Mark-up/i.test(String(inferWyck)), ofi:/Bull/i.test(String(inferOfi)) };
-  const passN8 = [a.pass.mac,a.pass.lead,a.pass.tech,a.pass.can,typeof ICTSTATE!=='undefined'&&ICTSTATE.score>=60,extraPass.dow,extraPass.wyck,extraPass.ofi].filter(Boolean).length;
+  const lbD=$('lb-dow'); if(lbD){ const ok=!!a.pass.dow; lbD.className='li-badge '+(ok?'pass':'fail'); lbD.textContent=ok?(a.dowPhase||a.dow||'---'):'---'; }
+  const lbW=$('lb-wyck'); if(lbW){ const ok=!!a.pass.wyck; lbW.className='li-badge '+(ok?'pass':'fail'); lbW.textContent=ok?(a.wyck||'---'):'---'; }
+  const lbO=$('lb-ofi'); if(lbO){ const ok=!!a.pass.ofi; lbO.className='li-badge '+(ok?'pass':'fail'); lbO.textContent=ok?`OFI ${a.ofiEngine?.ofiScore??a.ofi??'---'}`:'---'; }
+  const passN8 = [a.pass.mac,a.pass.lead,a.pass.tech,a.pass.can,!!a.pass.ict,!!a.pass.dow,!!a.pass.wyck,!!a.pass.ofi].filter(Boolean).length;
   const filterSumEl=$('filterSummary'); if(filterSumEl) filterSumEl.textContent=`${passN8}/8 層通過`;
   const filterConEl=$('filterConclusion');
   if(filterConEl){
     const macLbl={BULL:'多頭',WEAKBULL:'偏多',NEUTRAL:'中性',WEAKBEAR:'偏空',BEAR:'空頭'}[a.macro]||a.macro;
     const leadLbl=a.leadTot>=8?'強多':a.leadTot>=4?'偏多':a.leadTot<=-8?'強空':a.leadTot<=-4?'偏空':'中性';
     const techLbl=a.techSc>=5?'技術偏多':a.techSc<=-5?'技術偏空':'技術中性';
+    const dowLbl=a.dowPhase||a.dow||'---';
+    const wyckLbl=a.wyck||'---';
+    const ofiLbl=a.ofiEngine?.ofiScore?`OFI ${a.ofiEngine.ofiScore}`:(a.ofi||'---');
     filterConEl.style.display='block';
     filterConEl.style.background=passN8>=6?'rgba(0,230,118,.1)':passN8<=2?'rgba(255,23,68,.1)':'rgba(255,171,0,.08)';
     filterConEl.style.borderLeft='3px solid '+(passN8>=6?'#00e676':passN8<=2?'#ff1744':'#ffab00');
-    filterConEl.textContent=passN8>=6?`九層融合偏多：${macLbl} / ${leadLbl} / ${techLbl} / ${inferDow} / ${inferWyck}`:passN8>=4?`九層融合觀察：${macLbl} / ${leadLbl} / ${techLbl} / ${inferOfi}`:`九層融合保守：${macLbl} / ${leadLbl} / K線或結構未共振`;
+    filterConEl.textContent=passN8>=6?`九層融合偏多：${macLbl} / ${leadLbl} / ${techLbl} / ${dowLbl} / ${wyckLbl}`:passN8>=4?`九層融合觀察：${macLbl} / ${leadLbl} / ${techLbl} / ${ofiLbl}`:`九層融合保守：${macLbl} / ${leadLbl} / K線或結構未共振`;
   }
 }
 
@@ -7437,8 +7497,7 @@ window.quickTk = function(t){
 
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
-  ensureNineLayerBadgesFull();
-  initCharts();updAlerts();
+  ensureNineLayerBadgesFull();initCharts();updAlerts();
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
