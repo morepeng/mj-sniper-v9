@@ -5074,9 +5074,6 @@ function normalizeTickerSymbol(tk){
 }
 
 async function runAnalysis(tk){
-  const ld=$('loading');
-  let __ldTimer = setTimeout(()=>{ try{ ld&&clearTimeout(__ldTimer); ld&&ld.classList.add('hidden'); toast('分析逾時，已解除轉圈','warn',3500); }catch(e){} }, 12000);
-
   tk = normalizeTickerSymbol(tk);  // 標準化代號
   const prevTk = G.tk;
   G.tk=tk;
@@ -5517,7 +5514,7 @@ async function runAnalysis(tk){
 
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
 
-  ld.style.opacity='0';setTimeout(()=>{clearTimeout(__ldTimer); ld&&ld.classList.add('hidden');
+  ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
   // 手機：分析完成自動跳到 AI決策面板
   if(window.innerWidth<=768) setTimeout(()=>switchMobTab('left'),200);ld.style.opacity='';},400);
 
@@ -7462,17 +7459,14 @@ function setFlaskUrl(){
   updFlaskUrlDisplay();
 }
 function updFlaskUrlDisplay(){
-  const el = document.getElementById('curFlaskUrl');
-  const inp = document.getElementById('flaskUrlInp');
-  if(el) el.textContent = G.apiBase;
-  if(inp && !inp.value) inp.value = G.apiBase !== 'http://127.0.0.1:5000' ? G.apiBase : '';
+  try{
+    const el = $('curFlaskUrl');
+    if(!el) return;
+    if(typeof G==='undefined' || !G){ el.textContent='--'; return; }
+    el.textContent = G.apiBase || '--';
+  } catch(e){ console.warn('[updFlaskUrlDisplay] fail', e); }
 }
-window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
 
-
-/* ══════════════════════════════════════════════
-   📱 手機 Tab 切換系統
-   ══════════════════════════════════════════════ */
 function switchMobTab(tab) {
   if (window.innerWidth > 768) return;
 
