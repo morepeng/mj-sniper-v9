@@ -3939,6 +3939,28 @@ function injectSafePlusIntoAnalysis(a){
 
 
 
+
+function hydrateSafePlusFromDOM(){
+  try{
+    const warnText = ($('warnList')?.innerText||'').replace(/\s+/g,' ');
+    const chipsText = ($('chips')?.innerText||'').replace(/\s+/g,' ');
+    const set=(id, ok, txt)=>{ const el=$(id); if(!el) return; el.className='li-badge '+(ok?'pass':'fail'); el.textContent=txt?String(txt).slice(0,18):'---'; el.title=txt||'---'; };
+    const mDow = warnText.match(/道氏[:：]\s*([^|\n]+)/);
+    const mWy = warnText.match(/威科夫[:：]\s*([^|\n]+)/);
+    const mOfi = warnText.match(/(OFI\s*[-+]?\d+(?:\.\d+)?[^|\n]*)/i);
+    const mSt = warnText.match(/SuperTrend[:：]?\s*([^|\n]+)/i);
+    if(mDow) { set('sp-dow', true, mDow[1].trim()); set('lb-dow', true, mDow[1].trim()); }
+    if(mWy) { set('sp-wyck', true, mWy[1].trim()); set('lb-wyck', true, mWy[1].trim()); }
+    if(mOfi) { set('sp-ofi', true, mOfi[1].trim()); set('lb-ofi', true, mOfi[1].trim()); }
+    if(mSt && !$('sp-ofi')?.textContent.includes('OFI')) { set('sp-ofi', false, '由 warns 未取到 OFI'); }
+    const ictGuess = (typeof ICTSTATE!=='undefined' && ICTSTATE && typeof ICTSTATE.score!=='undefined') ? `ICT ${ICTSTATE.score}/100` : 'ICT 未注入';
+    set('sp-ict', ictGuess.includes('/100'), ictGuess); set('lb-ict', ictGuess.includes('/100'), ictGuess);
+    const meta=$('sp-meta'); if(meta){
+      meta.innerHTML = `來源回填：${mDow?'Dow✓':'Dow×'} / ${mWy?'Wyckoff✓':'Wyckoff×'} / ${mOfi?'OFI✓':'OFI×'}<br>${mDow?mDow[1].trim():'未由 warns 抓到道氏'}<br>${mWy?mWy[1].trim():'未由 warns 抓到威科夫'}`;
+    }
+    console.log('[safe-plus-dom-fallback]', {dow:!!mDow, wyck:!!mWy, ofi:!!mOfi, ict:ictGuess});
+  } catch(e){ console.warn('[safe-plus-dom-fallback] fail', e); }
+}
 function renderSafePlusStandalone(a){
   try{
     const set=(id, ok, txt)=>{ const el=$(id); if(!el) return; el.className='li-badge '+(ok?'pass':'fail'); el.textContent=(txt==null||txt==='')?'---':String(txt).slice(0,18); el.title=String(txt||'---'); };
@@ -7555,7 +7577,7 @@ window.quickTk = function(t){
 
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
-  ensureNineLayerBadgesFull();setTimeout(()=>window.__SAFEPLUS_LAST__&&forceSafePlusPanelSync(window.__SAFEPLUS_LAST__),800);initCharts();updAlerts();
+  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); },800);initCharts();updAlerts();
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
