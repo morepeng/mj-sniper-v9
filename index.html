@@ -3928,14 +3928,27 @@ function injectSafePlusIntoAnalysis(a){
   return a;
 }
 
+function updNineLayerMeta(a){
+  const rows = [
+    ['lb-ict', !!(a.pass&&a.pass.ict), (typeof ICTSTATE!=='undefined' ? `ICT ${ICTSTATE.score}/100` : 'ICT ---')],
+    ['lb-dow', !!(a.pass&&a.pass.dow), a.dowPhase || a.dowNote || a.dow || '---'],
+    ['lb-wyck', !!(a.pass&&a.pass.wyck), a.wyckNote || a.wyck || '---'],
+    ['lb-ofi', !!(a.pass&&a.pass.ofi), a.ofiEngine?.ofiScore ? `OFI ${a.ofiEngine.ofiScore}` : (a.ofiNote || a.ofi || '---')]
+  ];
+  rows.forEach(([id, ok, txt])=>{
+    const el=$(id); if(!el) return;
+    el.className='li-badge '+(ok?'pass':'fail');
+    el.textContent = ok ? String(txt).slice(0,18) : '---';
+    el.title = String(txt||'---');
+  });
+}
+
 function updLayers(a){
   ensureNineLayerBadgesFull();
-  [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],['lb-tech',a.pass.tech,`${a.rsiV?.toFixed?.(0)??'--'} RSI`],['lb-can',a.pass.can,a.entry],['lb-ict',typeof ICTSTATE!=='undefined'&&ICTSTATE.score>=60,typeof ICTSTATE!=='undefined'?`${ICTSTATE.score}/100`:'---']].forEach(([id,p,v])=>{
-    const el=$(id); if(!el)return; el.className='li-badge '+(p?'pass':'fail'); el.textContent=p?v:'---';
+  [['lb-mac',a.pass.mac,a.macro],['lb-lead',a.pass.lead,(a.leadTot>=0?'+':'')+a.leadTot],['lb-tech',a.pass.tech,`${a.rsiV?.toFixed?.(0)??'--'} RSI`],['lb-can',a.pass.can,a.entry],['lb-ict',!!(a.pass&&a.pass.ict),typeof ICTSTATE!=='undefined'?`ICT ${ICTSTATE.score}/100`:'ICT ---']].forEach(([id,p,v])=>{
+    const el=$(id); if(!el)return; el.className='li-badge '+(p?'pass':'fail'); el.textContent=p?v:'---'; el.title=String(v||'---');
   });
-  const lbD=$('lb-dow'); if(lbD){ const ok=!!a.pass.dow; lbD.className='li-badge '+(ok?'pass':'fail'); lbD.textContent=ok?(a.dowPhase||a.dow||'---'):'---'; }
-  const lbW=$('lb-wyck'); if(lbW){ const ok=!!a.pass.wyck; lbW.className='li-badge '+(ok?'pass':'fail'); lbW.textContent=ok?(a.wyck||'---'):'---'; }
-  const lbO=$('lb-ofi'); if(lbO){ const ok=!!a.pass.ofi; lbO.className='li-badge '+(ok?'pass':'fail'); lbO.textContent=ok?`OFI ${a.ofiEngine?.ofiScore??a.ofi??'---'}`:'---'; }
+  updNineLayerMeta(a);
   const passN8 = [a.pass.mac,a.pass.lead,a.pass.tech,a.pass.can,!!a.pass.ict,!!a.pass.dow,!!a.pass.wyck,!!a.pass.ofi].filter(Boolean).length;
   const filterSumEl=$('filterSummary'); if(filterSumEl) filterSumEl.textContent=`${passN8}/8 層通過`;
   const filterConEl=$('filterConclusion');
@@ -3950,6 +3963,7 @@ function updLayers(a){
     filterConEl.style.background=passN8>=6?'rgba(0,230,118,.1)':passN8<=2?'rgba(255,23,68,.1)':'rgba(255,171,0,.08)';
     filterConEl.style.borderLeft='3px solid '+(passN8>=6?'#00e676':passN8<=2?'#ff1744':'#ffab00');
     filterConEl.textContent=passN8>=6?`九層融合偏多：${macLbl} / ${leadLbl} / ${techLbl} / ${dowLbl} / ${wyckLbl}`:passN8>=4?`九層融合觀察：${macLbl} / ${leadLbl} / ${techLbl} / ${ofiLbl}`:`九層融合保守：${macLbl} / ${leadLbl} / K線或結構未共振`;
+    filterConEl.title = `ICT: ${typeof ICTSTATE!=='undefined' ? ICTSTATE.score+'/100' : '---'} | Dow: ${a.dowNote||a.dowPhase||a.dow||'---'} | Wyckoff: ${a.wyckNote||a.wyck||'---'} | OFI: ${a.ofiNote||a.ofiEngine?.ofiScore||a.ofi||'---'}`;
   }
 }
 
