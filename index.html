@@ -3940,6 +3940,26 @@ function injectSafePlusIntoAnalysis(a){
 
 
 
+
+function injectFromVisibleWarnings(){
+  try{
+    const items = Array.from(document.querySelectorAll('#warnList .warn-item')).map(el => (el.textContent||'').trim());
+    const set=(id, ok, txt)=>{ const el=$(id); if(!el) return; el.className='li-badge '+(ok?'pass':'fail'); el.textContent=txt?String(txt).slice(0,18):'---'; el.title=txt||'---'; };
+    let dow='', wyck='', ofi='';
+    items.forEach(t=>{
+      if(!dow && /道氏[:：]/.test(t)) dow = t.replace(/^.*?道氏[:：]\s*/,'').trim();
+      if(!wyck && /威科夫[:：]/.test(t)) wyck = t.replace(/^.*?威科夫[:：]\s*/,'').trim();
+      if(!ofi && /OFI/i.test(t)) ofi = t.trim();
+    });
+    if(dow){ set('sp-dow', true, dow); set('lb-dow', true, dow); }
+    if(wyck){ set('sp-wyck', true, wyck); set('lb-wyck', true, wyck); }
+    if(ofi){ set('sp-ofi', true, ofi); set('lb-ofi', true, ofi); }
+    const ictTxt = (typeof ICTSTATE!=='undefined' && ICTSTATE && typeof ICTSTATE.score!=='undefined') ? `ICT ${ICTSTATE.score}/100` : 'ICT 未注入';
+    set('sp-ict', /\d+\/100/.test(ictTxt), ictTxt); set('lb-ict', /\d+\/100/.test(ictTxt), ictTxt);
+    const meta=$('sp-meta'); if(meta){ meta.innerHTML = `visible-warn回填：${dow?'Dow✓':'Dow×'} / ${wyck?'Wyck✓':'Wyck×'} / ${ofi?'OFI✓':'OFI×'}<br>${dow||'未抓到道氏'}<br>${wyck||'未抓到威科夫'}`; }
+    console.log('[safe-plus-visible-warn]', {items, dow, wyck, ofi, ict:ictTxt});
+  } catch(e){ console.warn('[safe-plus-visible-warn] fail', e); }
+}
 function hydrateSafePlusFromDOM(){
   try{
     const warnText = ($('warnList')?.innerText||'').replace(/\s+/g,' ');
@@ -7577,7 +7597,7 @@ window.quickTk = function(t){
 
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
-  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); },800);initCharts();updAlerts();
+  ensureNineLayerBadgesFull();setTimeout(()=>{ if(window.__SAFEPLUS_LAST__) forceSafePlusPanelSync(window.__SAFEPLUS_LAST__); hydrateSafePlusFromDOM(); injectFromVisibleWarnings(); },800);initCharts();updAlerts();
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
