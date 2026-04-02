@@ -1602,7 +1602,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 
 <div id="leftTechDepthFloat" style="position:fixed;left:8px;top:58px;width:260px;max-height:78vh;overflow:auto;z-index:999999;background:#070e19;border:2px solid #00d4ff;border-radius:8px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto">
 <div style="font-family:var(--ft);font-size:.75rem;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px">左側技術深度</div>
-<div id="leftTechDepthGrid" class="tech-grid"></div>
+<div id="leftTechDepthGrid" class="tech-grid"><div class="tc" style="grid-column:1/-1"><div class="tc-lbl">初始化</div><div class="tc-val cyancolor">左側技術深度模組已載入</div><div class="tc-sub">若一直只看到這行，表示鏡像函式沒執行</div></div></div>
 </div><div class="toast-stack" id="toasts"></div>
 
 <script>
@@ -3985,6 +3985,30 @@ function updLSTM(a){
 
 
 
+
+function forceMirrorRightTechDepth(){
+  try{
+    ensureLeftTechDepthVisible();
+    const box = $('leftTechDepthFloat');
+    const grid = $('leftTechDepthGrid');
+    if(!box || !grid) return;
+    box.style.display='block'; box.style.visibility='visible'; box.style.opacity='1';
+    const right = document.querySelector('aside.right');
+    const sec = Array.from(document.querySelectorAll('aside.right .sec')).find(s => (s.innerText||'').includes('技術深度'));
+    if(sec){
+      grid.innerHTML = '<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側技術深度鏡像</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">'+sec.innerText.replace(/</g,'&lt;')+'</div></div>';
+      console.log('[forceMirrorRightTechDepth] mirrored section');
+      return;
+    }
+    const rightText = right ? right.innerText : '';
+    if(rightText && rightText.includes('Bullish')){
+      grid.innerHTML = '<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側區塊原文</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">'+rightText.slice(0,1200).replace(/</g,'&lt;')+'</div></div>';
+      console.log('[forceMirrorRightTechDepth] mirrored aside text');
+      return;
+    }
+    console.log('[forceMirrorRightTechDepth] no source');
+  } catch(e){ console.warn('[forceMirrorRightTechDepth] fail', e); }
+}
 function dumpRightTechDepthText(){
   try{
     const grid = $('leftTechDepthGrid'); if(!grid) return;
@@ -7637,3 +7661,17 @@ window.installPWA = async ()=>{
 window.addEventListener('load', ()=>setTimeout(ensureLeftTechDepthVisible, 600));
 window.addEventListener('resize', ensureLeftTechDepthVisible);
 setInterval(()=>{ try{ ensureLeftTechDepthVisible(); updLeftTechDepthFromRight(); dumpRightTechDepthText(); }catch(e){} }, 2500);
+
+
+document.addEventListener('DOMContentLoaded', ()=>{
+  try{
+    ensureLeftTechDepthVisible();
+    setTimeout(forceMirrorRightTechDepth, 800);
+    setTimeout(forceMirrorRightTechDepth, 1800);
+    const right = document.querySelector('aside.right');
+    if(right){
+      const mo = new MutationObserver(()=>{ forceMirrorRightTechDepth(); });
+      mo.observe(right, {childList:true, subtree:true, characterData:true});
+    }
+  } catch(e){}
+});
