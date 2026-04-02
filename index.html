@@ -4002,11 +4002,21 @@ function updLeftTechDepthFromRight(){
     ensureLeftTechDepthVisible();
     const grid = $('leftTechDepthGrid');
     if(!grid) return;
-    const html = $('techGrid')?.innerHTML || '';
+    let html = $('techGrid')?.innerHTML || '';
+    if(!html.trim()){
+      const rg = document.querySelector('.right #techGrid') || document.querySelector('.right .tech-grid') || document.querySelectorAll('.tech-grid')[1];
+      html = rg?.innerHTML || '';
+    }
+    if(!html.trim()){
+      const cards = Array.from(document.querySelectorAll('.right .tc')).map(el=>el.outerHTML).join('');
+      html = cards;
+    }
     if(html.trim()) grid.innerHTML = html;
-    else grid.innerHTML = '<div class="tc"><div class="tc-lbl">狀態</div><div class="tc-val amber">等待右側技術深度</div></div>';
+    else grid.innerHTML = '<div class="tc"><div class="tc-lbl">狀態</div><div class="tc-val amber">尚未抓到右側卡片</div><div class="tc-sub">等待 techGrid / .right .tc</div></div>';
+    console.log('[left-techdepth-mirror]', {copied: !!html.trim(), len: html.length, rightCards: document.querySelectorAll('.right .tc').length});
   } catch(e){ console.warn('[updLeftTechDepthFromRight] fail', e); }
 }
+
 function updTech(a){
   const patNet=(a.patBuy||0)-(a.patSell||0);
   const patStr=patNet>0?`+${patNet}看漲`:patNet<0?`${patNet}看跌`:'中性';
