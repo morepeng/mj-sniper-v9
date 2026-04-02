@@ -1198,7 +1198,12 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   </div>
 
   <!-- ══ 新增：智能過濾器 ══ -->
-  <div class="sec filter-panel" id="filterPanel">
+  <div class="sec" id="safePlusPanel"><div class="sec-title">九層補強</div>
+<div class="layer-item"><div class="li-icon">🧠</div><div class="li-name">ICT / SMC</div><div class="li-badge wait" id="sp-ict">---</div></div>
+<div class="layer-item"><div class="li-icon">📈</div><div class="li-name">道氏引擎</div><div class="li-badge wait" id="sp-dow">---</div></div>
+<div class="layer-item"><div class="li-icon">📦</div><div class="li-name">威科夫</div><div class="li-badge wait" id="sp-wyck">---</div></div>
+<div class="layer-item"><div class="li-icon">🌊</div><div class="li-name">OFI</div><div class="li-badge wait" id="sp-ofi">---</div></div>
+<div id="sp-meta" style="margin-top:6px;font-size:.6rem;color:#5a8aa8;line-height:1.5"></div></div><div class="sec filter-panel" id="filterPanel">
     <div class="sec-title">🔬 智能過濾器 <span class="v9-badge">v9 NEW</span></div>
     <div class="filter-grid" id="filterGrid">
       <div class="fc" id="fc-trend"><div class="fc-icon">📈</div><div class="fc-name">趨勢確認</div><div class="fc-val">---</div><div class="fc-tick">?</div></div>
@@ -3933,6 +3938,18 @@ function injectSafePlusIntoAnalysis(a){
 }
 
 
+
+function renderSafePlusStandalone(a){
+  try{
+    const set=(id, ok, txt)=>{ const el=$(id); if(!el) return; el.className='li-badge '+(ok?'pass':'fail'); el.textContent=(txt==null||txt==='')?'---':String(txt).slice(0,18); el.title=String(txt||'---'); };
+    set('sp-ict', !!(a.pass&&a.pass.ict), typeof ICTSTATE!=='undefined'?`ICT ${ICTSTATE.score}/100`:'ICT ---');
+    set('sp-dow', !!(a.pass&&a.pass.dow), a.dowPhase||a.dow||'---');
+    set('sp-wyck', !!(a.pass&&a.pass.wyck), a.wyck||'---');
+    set('sp-ofi', !!(a.pass&&a.pass.ofi), a.ofiEngine?.ofiScore?`OFI ${a.ofiEngine.ofiScore}`:(a.ofi||'---'));
+    const meta=$('sp-meta'); if(meta) meta.innerHTML = `Dow: ${a.dowNote||a.dowPhase||a.dow||'---'}<br>Wyckoff: ${a.wyckNote||a.wyck||'---'}<br>OFI: ${a.ofiNote||a.ofiEngine?.ofiScore||a.ofi||'---'}`;
+    console.log('[safe-plus-standalone] rendered', {dow:a.dowPhase||a.dow, wyck:a.wyck, ofi:a.ofiEngine?.ofiScore||a.ofi});
+  }catch(e){ console.warn('[safe-plus-standalone] fail', e); }
+}
 function forceSafePlusPanelSync(a){
   try{
     const setBadge=(id, ok, text, title)=>{
