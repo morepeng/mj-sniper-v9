@@ -772,128 +772,160 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 /* ── 手機直式主佈局 ── */
 @media screen and (max-width: 768px) {
 
-  /* ══════════════════════════════════════
+  /* ══════════════════════════════════════════
      1. 全域重置
-  ══════════════════════════════════════ */
-  *, *::before, *::after {
-    box-sizing: border-box !important;
-  }
+  ══════════════════════════════════════════ */
+  *, *::before, *::after { box-sizing: border-box !important; }
   html, body {
     width: 100vw !important;
     height: 100dvh !important;
     overflow: hidden !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    margin: 0 !important; padding: 0 !important;
   }
-
-  /* ══════════════════════════════════════
-     2. App 容器 — 不用 grid，改用 fixed
-  ══════════════════════════════════════ */
   .app {
     position: fixed !important;
-    top: 0 !important; left: 0 !important;
-    width: 100vw !important;
-    height: 100dvh !important;
+    inset: 0 !important;
+    width: 100vw !important; height: 100dvh !important;
     overflow: hidden !important;
     display: block !important;
-    z-index: 1 !important;
   }
 
-  /* ══════════════════════════════════════
-     3. Topbar — fixed top:0  height:48px
-  ══════════════════════════════════════ */
-  .app > header.topbar,
+  /* ══════════════════════════════════════════
+     2. Topbar — fixed top:0  height:48px
+  ══════════════════════════════════════════ */
   .topbar {
     position: fixed !important;
-    top: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    height: 48px !important;
-    width: 100vw !important;
+    top: 0 !important; left: 0 !important; right: 0 !important;
+    height: 48px !important; width: 100vw !important;
     z-index: 1000 !important;
-    display: flex !important;
-    flex-wrap: nowrap !important;
+    display: flex !important; flex-wrap: nowrap !important;
     align-items: center !important;
     overflow: hidden !important;
-    padding: 0 !important;
-    padding-bottom: 0 !important;
+    padding: 0 !important; padding-bottom: 0 !important;
+    background: #070e19 !important;
   }
-  /* Topbar 內部精簡 */
-  .brand            { padding: 0 6px !important; border-right: none !important; flex-shrink: 0 !important; }
-  .brand-logo       { font-size: .75rem !important; letter-spacing: 0 !important; }
-  .brand-ver        { display: none !important; }
-  .live-dot         { width: 5px !important; height: 5px !important; }
-  .search-bar       { padding: 0 4px !important; gap: 3px !important; border-right: none !important; height: 48px !important; overflow: hidden !important; flex: 0 0 auto !important; }
-  .ticker-inp       { width: 75px !important; font-size: .75rem !important; padding: 3px 5px !important; }
-  .tf-grp           { gap: 2px !important; flex-wrap: nowrap !important; }
-  .tf-btn[data-tf="5m"],
-  .tf-btn[data-tf="15m"],
-  .tf-btn[data-tf="1h"] { display: none !important; }
-  .tf-btn, .tk-btn  { font-size: .52rem !important; padding: 3px 4px !important; }
-  #goBtn            { padding: 5px 8px !important; font-size: .65rem !important; }
-  .topbar-stats     { display: none !important; }
-  #tkQuickRow       { display: none !important; }
-  #bAlertBtn,
-  #sAlertBtn        { display: none !important; }
-  #pwaInstallBtn    { display: none !important; }
-  .api-badge        { flex-shrink: 0 !important; }
-  .av               { font-size: .5rem !important; }
-  .quality-strip    { display: none !important; }
-  .honesty-bar      { display: none !important; }
+  .brand          { padding: 0 6px !important; border-right: none !important; flex-shrink: 0 !important; }
+  .brand-logo     { font-size: .75rem !important; letter-spacing: 0 !important; }
+  .brand-ver      { display: none !important; }
+  .live-dot       { width: 5px !important; height: 5px !important; }
+  .search-bar     { padding: 0 4px !important; gap: 3px !important; border-right: none !important;
+                    height: 48px !important; overflow: hidden !important; flex-shrink: 0 !important; }
+  .ticker-inp     { width: 75px !important; font-size: .75rem !important; padding: 3px 5px !important; }
+  .tf-grp         { gap: 2px !important; flex-wrap: nowrap !important; }
+  .tf-btn[data-tf="5m"], .tf-btn[data-tf="15m"], .tf-btn[data-tf="1h"] { display: none !important; }
+  .tf-btn, .tk-btn { font-size: .52rem !important; padding: 3px 4px !important; }
+  #goBtn          { padding: 5px 8px !important; font-size: .65rem !important; }
+  .topbar-stats, #tkQuickRow, #bAlertBtn, #sAlertBtn,
+  #pwaInstallBtn, .quality-strip, .honesty-bar { display: none !important; }
+  .api-badge      { flex-shrink: 0 !important; }
+  .av             { font-size: .5rem !important; }
 
-  /* ══════════════════════════════════════
-     4. 三個內容面板 — fixed top:48 bottom:56
-        預設全部隱藏（visibility:hidden 可藏 Canvas）
-  ══════════════════════════════════════ */
+  /* ══════════════════════════════════════════
+     3. Tab Bar — fixed bottom:0  height:56px
+  ══════════════════════════════════════════ */
+  .app > footer.statusbar { display: none !important; }
+  .mob-tabbar {
+    position: fixed !important;
+    bottom: 0 !important; left: 0 !important; right: 0 !important;
+    width: 100vw !important; height: 56px !important;
+    display: flex !important; align-items: stretch !important;
+    background: #050c14 !important;
+    border-top: 2px solid #1a3550 !important;
+    z-index: 9999 !important;
+  }
+  .mob-tab {
+    flex: 1 !important;
+    display: flex !important; flex-direction: column !important;
+    align-items: center !important; justify-content: center !important;
+    gap: 2px !important;
+    background: transparent !important; border: none !important;
+    color: #5a8aa8 !important; cursor: pointer !important;
+    padding: 6px 0 !important;
+    touch-action: manipulation !important;
+    -webkit-tap-highlight-color: rgba(0,212,255,.1) !important;
+    user-select: none !important; -webkit-user-select: none !important;
+  }
+  .mob-tab.active {
+    color: #00d4ff !important;
+    background: rgba(0,212,255,.07) !important;
+    border-top: 2px solid #00d4ff !important;
+  }
+  .mob-tab-icon { font-size: 1.3rem !important; line-height: 1 !important; pointer-events: none !important; }
+  .mob-tab-lbl  { font-size: .6rem !important;  line-height: 1 !important; pointer-events: none !important; }
+
+  /* ══════════════════════════════════════════
+     4. 三個內容面板 — fixed，用 left 推出螢幕外隱藏
+        ★ 不用 visibility/display 隱藏 Canvas
+        ★ 非 active → left:100vw（推到螢幕右側，看不見）
+        ★ active    → left:0    （回到螢幕）
+  ══════════════════════════════════════════ */
   .app > aside.left,
   .app > main.chart-area,
   .app > aside.right {
     position: fixed !important;
     top: 48px !important;
-    left: 0 !important;
-    right: 0 !important;
-    bottom: 56px !important;
     width: 100vw !important;
     height: calc(100dvh - 104px) !important;
-    display: block !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
+    /* 預設推到螢幕右側（完全不可見，Canvas 也不顯示） */
+    left: 100vw !important;
+    right: auto !important;
+    bottom: 56px !important;
     pointer-events: none !important;
     z-index: 10 !important;
+    transition: left .2s ease !important;
+  }
+
+  /* ── Active 面板：拉回螢幕 ── */
+  .app > aside.left.mob-active,
+  .app > main.chart-area.mob-active,
+  .app > aside.right.mob-active {
+    left: 0 !important;
+    pointer-events: auto !important;
+    z-index: 100 !important;
+  }
+
+  /* ── AI決策（左欄）：縱向可滾動 ── */
+  .app > aside.left {
+    display: block !important;
     overflow-y: auto !important;
     overflow-x: hidden !important;
     -webkit-overflow-scrolling: touch !important;
     overscroll-behavior-y: contain !important;
+    background: #070e19 !important;
   }
 
-  /* 啟用的面板 */
-  .app > aside.left.mob-active,
-  .app > main.chart-area.mob-active,
-  .app > aside.right.mob-active {
-    visibility: visible !important;
-    opacity: 1 !important;
-    pointer-events: auto !important;
-    z-index: 50 !important;
-  }
-
-  /* K線圖面板不縱向捲動（canvas 自己控制） */
-  .app > main.chart-area,
-  .app > main.chart-area.mob-active {
-    overflow: hidden !important;
+  /* ── K線圖（中欄）：縱向 flex，不捲動，canvas 填滿 ── */
+  .app > main.chart-area {
     display: flex !important;
     flex-direction: column !important;
+    overflow: hidden !important;
+    background: #070f1b !important;
   }
   .app > main.chart-area.mob-active {
     touch-action: none !important;
   }
-
-  /* AI決策 / 技術面：display:block 讓 overflow-y 生效 */
-  .app > aside.left,
-  .app > aside.right {
-    display: block !important;
+  .app > main.chart-area .main-wrap {
+    flex: 1 !important;
+    min-height: 0 !important;
+    position: relative !important;
+  }
+  .app > main.chart-area .sub-section {
+    height: 85px !important;
+    flex-shrink: 0 !important;
+    overflow: hidden !important;
   }
 
-  /* 面板內所有互動元素確保可點 */
+  /* ── 技術面（右欄）：縱向可滾動 ── */
+  .app > aside.right {
+    display: block !important;
+    overflow-y: auto !important;
+    overflow-x: hidden !important;
+    -webkit-overflow-scrolling: touch !important;
+    overscroll-behavior-y: contain !important;
+    background: #070e19 !important;
+  }
+
+  /* ── 側欄 active 內部所有元素可互動 ── */
   .app > aside.left.mob-active *,
   .app > aside.right.mob-active * {
     pointer-events: auto !important;
@@ -904,66 +936,27 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   .app > aside.right.mob-active button,
   .app > aside.right.mob-active input,
   .app > aside.right.mob-active select {
-    touch-action: auto !important;
-  }
-
-  /* ══════════════════════════════════════
-     5. Statusbar 隱藏；Tab Bar fixed bottom:0
-  ══════════════════════════════════════ */
-  .app > footer.statusbar { display: none !important; }
-
-  .mob-tabbar {
-    position: fixed !important;
-    bottom: 0 !important;
-    left: 0 !important;
-    right: 0 !important;
-    width: 100vw !important;
-    height: 56px !important;
-    display: flex !important;
-    align-items: stretch !important;
-    background: #050c14 !important;
-    border-top: 2px solid #1a3550 !important;
-    z-index: 9999 !important;
-  }
-  .mob-tab {
-    flex: 1 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    align-items: center !important;
-    justify-content: center !important;
-    gap: 2px !important;
-    background: transparent !important;
-    border: none !important;
-    color: #5a8aa8 !important;
-    font-size: .6rem !important;
+    touch-action: manipulation !important;
     cursor: pointer !important;
-    padding: 0 !important;
-    touch-action: auto !important;
-    -webkit-tap-highlight-color: transparent !important;
   }
-  .mob-tab.active {
-    color: #00d4ff !important;
-    background: rgba(0,212,255,.06) !important;
-    border-top: 2px solid #00d4ff !important;
-  }
-  .mob-tab-icon { font-size: 1.2rem !important; line-height: 1 !important; }
-  .mob-tab-lbl  { font-size: .58rem !important; line-height: 1 !important; }
 
-  /* ══════════════════════════════════════
-     6. 內容細節調整
-  ══════════════════════════════════════ */
-  .sec          { padding: 10px 12px !important; }
+  /* ══════════════════════════════════════════
+     5. 內容細節
+  ══════════════════════════════════════════ */
+  .sec            { padding: 10px 12px !important; }
   .dec-box, .sl-box, .dec-wrap { max-width: 100% !important; min-height: auto !important; }
-  .warn-item    { word-break: break-word !important; }
-  .tech-grid    { grid-template-columns: 1fr 1fr !important; }
-  .main-wrap    { min-height: 0 !important; flex: 1 !important; }
-  .sub-section  { height: 85px !important; flex-shrink: 0 !important; }
+  .warn-item      { word-break: break-word !important; }
+  .tech-grid      { grid-template-columns: 1fr 1fr !important; }
   .lstm-row, .lstm-price { font-size: .6rem !important; }
-  #realAiContent { max-height: none !important; overflow: visible !important; }
+  #realAiContent  { max-height: none !important; overflow: visible !important; }
+  .warn-list      { max-height: none !important; }
+  .pat-list       { max-height: none !important; }
 
 }
 
 /* ─── 手機橫式 ─── */
+
+
 @media screen and (max-width: 900px) and (orientation: landscape) {
   .app {
     position: fixed !important;
@@ -7881,57 +7874,44 @@ window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
    📱 手機 Tab 切換系統
    ══════════════════════════════════════════════ */
 function switchMobTab(tab) {
-  // 用 CSS 判斷是否為手機模式（tabbar 顯示中）
   const tabbar = document.getElementById('mobTabbar');
   if (!tabbar || getComputedStyle(tabbar).display === 'none') return;
 
-  const panels = {
-    left:  document.querySelector('.app > aside.left'),
-    chart: document.querySelector('.app > main.chart-area'),
-    right: document.querySelector('.app > aside.right')
-  };
+  const map = { left: 'aside.left', chart: 'main.chart-area', right: 'aside.right' };
 
-  // 全部隱藏
-  Object.values(panels).forEach(el => {
+  // 全部推出螢幕（移除 mob-active）
+  Object.keys(map).forEach(k => {
+    const el = document.querySelector('.app > ' + map[k]);
     if (el) el.classList.remove('mob-active');
   });
   document.querySelectorAll('.mob-tab').forEach(t => t.classList.remove('active'));
 
-  // 顯示目標面板
-  const target = panels[tab];
-  if (target) {
-    target.classList.add('mob-active');
-    // 非K線面板滾回頂部
-    if (tab !== 'chart') target.scrollTop = 0;
+  // 顯示目標面板（加 mob-active → left:0）
+  const sel = map[tab] || 'main.chart-area';
+  const el  = document.querySelector('.app > ' + sel);
+  if (el) {
+    el.classList.add('mob-active');
+    if (tab !== 'chart') el.scrollTop = 0;
   }
 
-  // 高亮按鈕
+  // 高亮 Tab 按鈕
   const btn = document.getElementById('tab-' + tab);
   if (btn) btn.classList.add('active');
   window._mobActiveTab = tab;
 
-  // K線圖：延遲觸發 resize 確保 canvas 填滿
+  // K線：觸發 resize，讓 canvas 重新填滿面板
   if (tab === 'chart') {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
-      if (window.MJ && MJ.lwMain) {
-        MJ.lwMain.applyOptions({});
-      }
-    }, 50);
+      if (window.G && G.lwMain) G.lwMain.applyOptions({});
+    }, 60);
   }
 }
 // 手機初始化：預設顯示 K線圖
 function initMobileLayout() {
   const tabbar = document.getElementById('mobTabbar');
-  if (!tabbar) return;
-  const isMob = getComputedStyle(tabbar).display !== 'none';
-  if (isMob) {
-    ['aside.left','main.chart-area','aside.right'].forEach(sel => {
-      const el = document.querySelector('.app > ' + sel);
-      if (el) el.classList.remove('mob-active');
-    });
-    switchMobTab('chart');
-  }
+  if (!tabbar || getComputedStyle(tabbar).display === 'none') return;
+  switchMobTab('chart');
 }
 
 // 監聽螢幕旋轉
