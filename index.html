@@ -3991,24 +3991,31 @@ function forceMirrorRightTechDepth(){
     ensureLeftTechDepthVisible();
     const box = $('leftTechDepthFloat');
     const grid = $('leftTechDepthGrid');
-    if(!box || !grid) return;
+    if(!box || !grid) return false;
     box.style.display='block'; box.style.visibility='visible'; box.style.opacity='1';
+    let txt='';
     const right = document.querySelector('aside.right');
     const sec = Array.from(document.querySelectorAll('aside.right .sec')).find(s => (s.innerText||'').includes('技術深度'));
-    if(sec){
-      grid.innerHTML = '<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側技術深度鏡像</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">'+sec.innerText.replace(/</g,'&lt;')+'</div></div>';
-      console.log('[forceMirrorRightTechDepth] mirrored section');
-      return;
+    if(sec) txt = (sec.innerText||'').trim();
+    if(!txt){
+      const titles = Array.from(document.querySelectorAll('.sec-title')).map(el => (el.innerText||'').trim());
+      const idx = titles.findIndex(t => t.includes('技術深度'));
+      if(idx>=0){
+        const sec2 = document.querySelectorAll('.sec')[idx];
+        txt = (sec2?.innerText||'').trim();
+      }
     }
-    const rightText = right ? right.innerText : '';
-    if(rightText && rightText.includes('Bullish')){
-      grid.innerHTML = '<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側區塊原文</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">'+rightText.slice(0,1200).replace(/</g,'&lt;')+'</div></div>';
-      console.log('[forceMirrorRightTechDepth] mirrored aside text');
-      return;
+    if(!txt && right) txt = (right.innerText||'').trim();
+    if(txt && txt.length>20){
+      grid.innerHTML = '<div class="tc" style="grid-column:1/-1"><div class="tc-lbl">右側技術深度鏡像</div><div class="tc-sub" style="white-space:pre-wrap;color:#cfe0ee">'+txt.slice(0,1400).replace(/</g,'&lt;')+'</div></div>';
+      console.log('[forceMirrorRightTechDepth] ok', txt.length);
+      return true;
     }
-    console.log('[forceMirrorRightTechDepth] no source');
-  } catch(e){ console.warn('[forceMirrorRightTechDepth] fail', e); }
+    console.log('[forceMirrorRightTechDepth] pending');
+    return false;
+  } catch(e){ console.warn('[forceMirrorRightTechDepth] fail', e); return false; }
 }
+
 function dumpRightTechDepthText(){
   try{
     const grid = $('leftTechDepthGrid'); if(!grid) return;
@@ -7675,3 +7682,16 @@ document.addEventListener('DOMContentLoaded', ()=>{
     }
   } catch(e){}
 });
+
+
+(function(){
+  const kick = ()=>{ try{ ensureLeftTechDepthVisible(); forceMirrorRightTechDepth(); }catch(e){} };
+  document.addEventListener('DOMContentLoaded', kick);
+  window.addEventListener('load', kick);
+  setTimeout(kick, 500);
+  setTimeout(kick, 1200);
+  setTimeout(kick, 2500);
+  setTimeout(kick, 5000);
+  setInterval(kick, 2000);
+  document.addEventListener('click', ()=>setTimeout(kick,300), true);
+})();
