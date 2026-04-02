@@ -1600,7 +1600,10 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   </div>
 </div>
 
-<div class="toast-stack" id="toasts"></div>
+<div id="leftTechDepthFloat" style="position:fixed;left:8px;top:58px;width:260px;max-height:78vh;overflow:auto;z-index:999999;background:#070e19;border:2px solid #00d4ff;border-radius:8px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:block!important;visibility:visible!important;opacity:1!important;pointer-events:auto">
+<div style="font-family:var(--ft);font-size:.75rem;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px">左側技術深度</div>
+<div id="leftTechDepthGrid" class="tech-grid"></div>
+</div><div class="toast-stack" id="toasts"></div>
 
 <script>
 /* ═══════════════════════════════════════════════════════════════════
@@ -3980,6 +3983,30 @@ function updLSTM(a){
   }
 }
 
+
+function ensureLeftTechDepthVisible(){
+  try{
+    let box = $('leftTechDepthFloat');
+    if(!box){
+      box = document.createElement('div');
+      box.id='leftTechDepthFloat';
+      box.style.cssText='position:fixed;left:8px;top:58px;width:260px;max-height:78vh;overflow:auto;z-index:999999;background:#070e19;border:2px solid #00d4ff;border-radius:8px;padding:10px;box-shadow:0 12px 30px rgba(0,0,0,.55);display:block;visibility:visible;opacity:1;pointer-events:auto';
+      box.innerHTML='<div style="font-family:var(--ft);font-size:.75rem;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px">左側技術深度</div><div id="leftTechDepthGrid" class="tech-grid"></div>';
+      document.body.appendChild(box);
+    }
+    box.style.display='block'; box.style.visibility='visible'; box.style.opacity='1';
+  } catch(e){ console.warn('[leftTechDepthVisible] fail', e); }
+}
+function updLeftTechDepthFromRight(){
+  try{
+    ensureLeftTechDepthVisible();
+    const grid = $('leftTechDepthGrid');
+    if(!grid) return;
+    const html = $('techGrid')?.innerHTML || '';
+    if(html.trim()) grid.innerHTML = html;
+    else grid.innerHTML = '<div class="tc"><div class="tc-lbl">狀態</div><div class="tc-val amber">等待右側技術深度</div></div>';
+  } catch(e){ console.warn('[updLeftTechDepthFromRight] fail', e); }
+}
 function updTech(a){
   const patNet=(a.patBuy||0)-(a.patSell||0);
   const patStr=patNet>0?`+${patNet}看漲`:patNet<0?`${patNet}看跌`:'中性';
@@ -7459,14 +7486,17 @@ function setFlaskUrl(){
   updFlaskUrlDisplay();
 }
 function updFlaskUrlDisplay(){
-  try{
-    const el = $('curFlaskUrl');
-    if(!el) return;
-    if(typeof G==='undefined' || !G){ el.textContent='--'; return; }
-    el.textContent = G.apiBase || '--';
-  } catch(e){ console.warn('[updFlaskUrlDisplay] fail', e); }
+  const el = document.getElementById('curFlaskUrl');
+  const inp = document.getElementById('flaskUrlInp');
+  if(el) el.textContent = G.apiBase;
+  if(inp && !inp.value) inp.value = G.apiBase !== 'http://127.0.0.1:5000' ? G.apiBase : '';
 }
+window.addEventListener('load', () => setTimeout(updFlaskUrlDisplay, 500));
 
+
+/* ══════════════════════════════════════════════
+   📱 手機 Tab 切換系統
+   ══════════════════════════════════════════════ */
 function switchMobTab(tab) {
   if (window.innerWidth > 768) return;
 
@@ -7574,3 +7604,7 @@ window.installPWA = async ()=>{
 </script>
 </body>
 </html>
+
+window.addEventListener('load', ()=>setTimeout(ensureLeftTechDepthVisible, 600));
+window.addEventListener('resize', ensureLeftTechDepthVisible);
+setInterval(()=>{ try{ ensureLeftTechDepthVisible(); if($('techGrid')?.innerHTML) updLeftTechDepthFromRight(); }catch(e){} }, 2500);
