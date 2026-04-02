@@ -1116,7 +1116,11 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
       <div class="li-icon">📈</div><div class="li-name">第四層：技術面</div>
       <div class="li-badge wait" id="lb-tech">待分析</div>
     </div>
-    <div class="layer-item">
+    <div class="layer-item"><div class="li-icon">🧠</div><div class="li-name">ICT / SMC</div><div class="li-badge wait" id="lb-ict">---</div></div>
+<div class="layer-item"><div class="li-icon">📈</div><div class="li-name">道氏引擎</div><div class="li-badge wait" id="lb-dow">---</div></div>
+<div class="layer-item"><div class="li-icon">📦</div><div class="li-name">威科夫</div><div class="li-badge wait" id="lb-wyck">---</div></div>
+<div class="layer-item"><div class="li-icon">🌊</div><div class="li-name">OFI</div><div class="li-badge wait" id="lb-ofi">---</div></div>
+<div class="layer-item">
       <div class="li-icon">🕯</div><div class="li-name">第五層：K線確認</div>
       <div class="li-badge wait" id="lb-can">待分析</div>
     </div>
@@ -3928,6 +3932,29 @@ function injectSafePlusIntoAnalysis(a){
   return a;
 }
 
+
+function forceSafePlusPanelSync(a){
+  try{
+    const setBadge=(id, ok, text, title)=>{
+      const el=$(id); if(!el) return;
+      el.className='li-badge '+(ok?'pass':'fail');
+      el.textContent=(text==null||text==='')?'---':String(text).slice(0,18);
+      el.title=title||String(text||'---');
+      const row=el.closest('.layer-item'); if(row) row.style.display='flex';
+    };
+    setBadge('lb-ict', !!(a.pass&&a.pass.ict), typeof ICTSTATE!=='undefined'?`ICT ${ICTSTATE.score}/100`:'ICT ---', typeof ICTSTATE!=='undefined'?`ICT score ${ICTSTATE.score}/100`:'ICT ---');
+    setBadge('lb-dow', !!(a.pass&&a.pass.dow), a.dowPhase||a.dow||'---', a.dowNote||a.dowPhase||a.dow||'---');
+    setBadge('lb-wyck', !!(a.pass&&a.pass.wyck), a.wyck||'---', a.wyckNote||a.wyck||'---');
+    setBadge('lb-ofi', !!(a.pass&&a.pass.ofi), a.ofiEngine?.ofiScore?`OFI ${a.ofiEngine.ofiScore}`:(a.ofi||'---'), a.ofiNote||a.ofiEngine?.ofiScore||a.ofi||'---');
+    window.__SAFEPLUS_LAST__ = a;
+    console.log('[safe-plus-fix] panel sync ok', {
+      ict: typeof ICTSTATE!=='undefined'?ICTSTATE.score:null,
+      dow: a.dowPhase||a.dow,
+      wyck: a.wyck,
+      ofi: a.ofiEngine?.ofiScore||a.ofi
+    });
+  } catch(e){ console.warn('[safe-plus-fix] panel sync fail', e); }
+}
 function updNineLayerMeta(a){
   const rows = [
     ['lb-ict', !!(a.pass&&a.pass.ict), (typeof ICTSTATE!=='undefined' ? `ICT ${ICTSTATE.score}/100` : 'ICT ---')],
@@ -7511,7 +7538,7 @@ window.quickTk = function(t){
 
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
-  ensureNineLayerBadgesFull();initCharts();updAlerts();
+  ensureNineLayerBadgesFull();setTimeout(()=>window.__SAFEPLUS_LAST__&&forceSafePlusPanelSync(window.__SAFEPLUS_LAST__),800);initCharts();updAlerts();
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
