@@ -7811,6 +7811,7 @@ window.quickTk = function(t){
 /* ── 初始化 ── */
 window.addEventListener('load',()=>{
   initCharts();updAlerts();
+  initMobileLayout(); // ★ 手機佈局初始化
   // 恢復已儲存的市價標籤
   const savedRP = G.realPrices['2330.TW'];
   if(savedRP) { $('ptVal').textContent=savedRP+' NT$'; }
