@@ -1258,10 +1258,7 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
     <div class="chips" id="chips"></div>
   </div>
 
-  <div id="leftTechDepthFloat" style="position:fixed;left:8px;top:96px;width:255px;max-height:72vh;overflow:auto;z-index:1200;background:#070e19;border:1px solid #0e1f33;border-radius:6px;padding:10px;box-shadow:0 10px 28px rgba(0,0,0,.45)">
-  <div style="font-family:var(--ft);font-size:.73rem;font-weight:700;color:#00d4ff;letter-spacing:.08em;margin-bottom:8px;display:flex;align-items:center;gap:6px"><span style="width:2px;height:10px;background:#00d4ff;border-radius:1px"></span>左側技術深度</div>
-  <div id="leftTechDepthGrid" class="tech-grid"></div>
-</div><div class="chart-legend">
+  <div class="chart-legend">
     <div class="leg"><div class="leg-dot" style="background:#00e676;color:#000">B</div>買入信號</div>
     <div class="leg"><div class="leg-dot" style="background:#ff1744;color:#fff">S</div>賣出信號</div>
     <div class="leg"><div class="leg-dot" style="background:#ffab00;color:#000">9</div>神奇九轉</div>
@@ -5076,35 +5073,10 @@ function normalizeTickerSymbol(tk){
   return tk;
 }
 
-
-function enhanceForLeftTechDepth(a){
-  if(!a || typeof a!=='object') return a;
-  try{
-    const histV = a.histV ?? 0, rsiV = a.rsiV ?? 50, mfiV = a.mfiV ?? 50, last = a.last ?? 0, ma200 = a.ma200 ?? 0;
-    if(!a.dow){ const score=(histV>0?1:-1)+(a.stV&&a.stV.t>0?1:-1)+((a.leadTot||0)>=0?1:-1); a.dow=score>=1?'Bullish':score<=-1?'Bearish':'Neutral'; a.dowPhase=a.dow; a.dowNote='均線/動能代理'; }
-    if(!a.wyck){ if((a.L3||0)>=2 && (a.L5||0)>=2) a.wyck='Phase D'; else if(rsiV<35) a.wyck='Phase C'; else if(ma200 && last>ma200*1.06) a.wyck='Mark-up'; else if(ma200 && last<ma200*0.94) a.wyck='Mark-down'; else a.wyck='Phase A'; a.wyckNote=`RSI ${rsiV?.toFixed?.(0)??rsiV} / MFI ${mfiV?.toFixed?.(0)??mfiV}`; }
-    if(!a.ofi){ const s=(histV>0?1:-1)+((a.L1||0)>0?1:-1)+((a.L3||0)>0?1:-1); a.ofi=s>=1?'Bullish':s<=-1?'Bearish':'Neutral'; a.ofiNote=`proxy ${s}`; }
-    if(a.bayes==null) a.bayes = String(Math.max(5, Math.min(95, Math.round(50 + ((a.score||50)-50)*0.4))));
-  } catch(e){ console.warn('enhanceForLeftTechDepth', e); }
-  return a;
-}
-function updLeftTechDepth(a){
-  const grid = $('leftTechDepthGrid'); if(!grid || !a) return;
-  const patNet = (a.patBuy!=null && a.patSell!=null) ? ((a.patBuy||0)-(a.patSell||0)).toFixed(1) : '---';
-  const rows = [
-    ['道氏趨勢', a.dow || '---', a.dow==='Bullish'?'bull':a.dow==='Bearish'?'bear':'amber', a.dowNote||a.dowPhase||''],
-    ['威科夫', a.wyck || '---', (a.wyck||'').includes('Phase D')||(a.wyck||'').includes('Mark-up')?'bull':(a.wyck||'').includes('Mark-down')?'bear':'purple', a.wyckNote||''],
-    ['多頭機率', a.bayes ? `${a.bayes}%` : '---', parseFloat(a.bayes)>=60?'bull':parseFloat(a.bayes)<=40?'bear':'amber', '與當前分析同步'],
-    ['OFI 估算流', a.ofi || '---', (a.ofi||'').includes('Bull')?'bull':(a.ofi||'').includes('Bear')?'bear':'amber', a.ofiNote||''],
-    ['SuperTrend', a.stSig || '---', (a.stSig||'').includes('Bull')||(a.stSig||'').includes('多頭')?'bull':(a.stSig||'').includes('空頭')||(a.stSig||'').includes('Bear')?'bear':'amber', ''],
-    ['TTM Squeeze', a.ttm || '---', (a.ttm||'').includes('釋放')?'bull':'amber', ''],
-    ['假突破偵測', a.fakeBreak ? '有' : '無', a.fakeBreak ? 'bear':'bull', a.fakeBreak ? '上影/結構異常':''],
-    ['K線評分', String(a.canSc ?? '---'), (a.canSc||0)>=4?'bull':(a.canSc||0)<0?'bear':'amber', a.risk?`${a.risk}風險`:'' ],
-    ['形態淨分', patNet, parseFloat(patNet)>0?'bull':parseFloat(patNet)<0?'bear':'amber', (a.patSigsShort||[]).join(' / ') ]
-  ];
-  grid.innerHTML = rows.map(([k,v,c,s]) => `<div class="tc"><div class="tc-lbl">${k}</div><div class="tc-val ${c}">${v}</div>${s?`<div class="tc-sub">${s}</div>`:''}</div>`).join('');
-}
 async function runAnalysis(tk){
+  const ld=$('loading');
+  let __ldTimer = setTimeout(()=>{ try{ ld&&clearTimeout(__ldTimer); ld&&ld.classList.add('hidden'); toast('分析逾時，已解除轉圈','warn',3500); }catch(e){} }, 12000);
+
   tk = normalizeTickerSymbol(tk);  // 標準化代號
   const prevTk = G.tk;
   G.tk=tk;
@@ -5545,7 +5517,7 @@ async function runAnalysis(tk){
 
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
 
-  ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
+  ld.style.opacity='0';setTimeout(()=>{clearTimeout(__ldTimer); ld&&ld.classList.add('hidden');
   // 手機：分析完成自動跳到 AI決策面板
   if(window.innerWidth<=768) setTimeout(()=>switchMobTab('left'),200);ld.style.opacity='';},400);
 
