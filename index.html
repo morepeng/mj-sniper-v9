@@ -1486,7 +1486,16 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
     </div>
     <div style="font-size:.6rem;color:#3a6078">目前：<span id="curFlaskUrl" style="color:#5a8aaa">--</span></div>
   </div>
-<div class="sec" id="watchlistSec">
+<div class="sec" id="amConfirmSec"><div class="sec-title">🌅 隔日早盤確認</div>
+<div style="font-size:.61rem;color:#5a8aaa;line-height:1.5;margin-bottom:6px">昨日標記 normal / conservative 候選，今日開盤後重新檢查 5 項條件。</div>
+<div class="alert-form">
+<div class="alert-row"><input class="a-inp" id="amTickers" placeholder="AMGN CSCO JNJ 或 2330.TW,2317.TW" style="flex:1"></div>
+<div class="alert-row"><button class="btn-sm g" id="amRunBtn">掃描</button><button class="btn-sm" id="amUseCurrentBtn">帶入目前代碼</button></div>
+<div class="alert-row"><select class="a-sel" id="amMarketSel" style="flex:1"><option value="AUTO">市場自動</option><option value="US">US</option><option value="TW">TW</option></select></div>
+</div>
+<div id="amConfirmSummary" style="font-size:.62rem;color:#9ec5d8;margin-top:6px">等待掃描</div>
+<div id="amConfirmList" class="warn-list" style="margin-top:8px"></div>
+</div><div class="sec" id="watchlistSec">
     <div class="sec-title" style="display:flex;align-items:center;justify-content:space-between">
       <span>📋 到價監控名單</span>
       <div style="display:flex;gap:4px">
@@ -4057,6 +4066,69 @@ function updSB(a){
   }
 }
 
+
+function marketOfTicker(tk){ return /\.TW$|\.TWO$/.test(tk)?'TW':'US'; }
+function fmtP(v){ return v==null || isNaN(v)?'--':(Math.abs(v)>=100?v.toFixed(1):v.toFixed(2)); }
+function rsiFromCloses(cl){ const arr=RSI(cl,14); const v=arr[arr.length-1]; return v==null?50:v; }
+function classifyMorningAction(passed, regime){
+  const minPass = ({BULL:3,WEAKBULL:3,NEUTRAL:3,WEAKBEAR:4,BEAR:99})[regime] ?? 3;
+  if(regime==='BEAR') return {action:'🚫 大盤空頭禁止', size:'0%'};
+  if(passed < minPass) return {action: regime==='WEAKBEAR' ? `⚠ WEAK_BEAR需${minPass}/5` : `⏳ 通過${passed}/5，條件不足`, size:'0%'};
+  if(passed===5) return {action:'🚀 積極進場 50%倉', size:'50%'};
+  if(passed===4) return {action:'🟢 標準進場 33%倉', size:'33%'};
+  return {action:'🟡 保守試探 20%倉', size:'20%'};
+}
+async function fetchMorningBars(tk, market){
+  const daily = await fetchKlineDirect(tk,'1d',10) || G.data || genOHLCV(tk,10);
+  let intra = await fetchKlineDirect(tk,'15m',20);
+  if(!intra || intra.length<2) intra = genOHLCV(tk,20);
+  return {daily, intra};
+}
+async function runMorningConfirmationScan(){
+  try{
+    const raw = ($('amTickers')?.value||'').trim();
+    const out = $('amConfirmList'), sum = $('amConfirmSummary');
+    if(!raw){ toast('請先輸入候選股票', 'warn', 2500); return; }
+    const tickers = [...new Set(raw2.split(/[\s,]+/).map(s=>s.trim().toUpperCase()).filter(s=>s && /[A-Z]/.test(s) && !/^\d+(\.\d+)?$/.test(s)))];
+  const manualMap = amParseManualMap();
+    out.innerHTML=''; sum.textContent='掃描中...';
+    const rows=[];
+    for(const tk of tickers){
+      const marketSel = $('amMarketSel')?.value || 'AUTO';
+      const market = marketSel==='AUTO'?marketOfTicker(tk):marketSel;
+      const regime = (G.an?.macro)||'NEUTRAL';
+      let daily=[], intra=[];
+      try{ ({daily,intra} = await fetchMorningBars(tk, market)); }catch(e){}
+      if(!daily || daily.length<2){ rows.push(`<div class='warn-item crit'>${tk}：無法取得資料</div>`); continue; }
+      const yest = daily[daily.length-2], today = daily[daily.length-1];
+      const prevClose = +yest.close, prevHigh = +(yest.high ?? yest.close);
+      const currOpen = +(today.open ?? today.close), currClose = +today.close, currHigh = +(today.high ?? today.close), currLow = +(today.low ?? today.close);
+      const cl = daily.map(b=>+b.close).filter(Boolean); const rsiNow = rsiFromCloses(cl);
+      const body = Math.abs(currClose-currOpen), upperWick = Math.max(0, currHigh - Math.max(currClose,currOpen));
+      const candleOkE = body>0.01 ? upperWick <= body*1.5 : true;
+      let condB = true, volDesc='量能資料不足';
+      if(intra && intra.length>=2){
+        const firstBar = intra[intra.length-1];
+        const prevIntra = intra[intra.length-2];
+        const v1 = +(firstBar.volume||0), v0 = +(prevIntra.volume||1);
+        const ratio = v0>0? v1/v0 : 1;
+        condB = ratio >= 1.2;
+        volDesc = `15分量比 ${(ratio*100).toFixed(0)}%`;
+      }
+      const condA = currOpen >= prevClose*0.995;
+      const condC = currHigh >= prevHigh*1.001;
+      const condD = rsiNow >= 50;
+      const condE = candleOkE;
+      const passed = [condA,condB,condC,condD,condE].filter(Boolean).length;
+      const adv = classifyMorningAction(passed, regime);
+      const entryLo = (currClose*0.997).toFixed(2), entryHi = (currClose*1.003).toFixed(2);
+      const sym = c=>c?'✅':'❌';
+      rows.push(`<div class='warn-item ${passed>=4?'pos':passed>=3?'info':'caut'}'><div style="font-weight:700;color:#00d4ff">${tk}｜${adv.action}</div><div>${sym(condA)}A 開盤　${sym(condB)}B 量能　${sym(condC)}C 突破　${sym(condD)}D RSI　${sym(condE)}E 無假突破 ｜ ${passed}/5</div><div style="font-size:.6rem;color:#9ec5d8">現價 ${fmtP(currClose)}｜進場區間 ${entryLo}~${entryHi}｜${volDesc}｜RSI ${rsiNow.toFixed(1)}｜宏觀 ${regime}</div></div>`);
+    }
+    out.innerHTML = rows.join('') || `<div class='warn-item caut'>沒有可顯示結果</div>`;
+    sum.textContent = `已掃描 ${tickers.length} 檔；規則為 A開盤、B量能、C突破、D RSI、E無假突破。`;
+  } catch(e){ console.warn('[morning confirmation] fail', e); $('amConfirmSummary').textContent='掃描失敗'; }
+}
 function updAlerts(){
   const list=$('alertList');
   if(!G.alerts.length){list.innerHTML='<div style="font-size:.6rem;color:#3a6078;padding:4px">尚無提醒</div>';return;}
@@ -5073,38 +5145,6 @@ function normalizeTickerSymbol(tk){
   return tk;
 }
 
-
-function calcTechDepthWeight(a){
-  try{
-    let score = 50;
-    const detail = [];
-    const ictScore = (typeof ICTSTATE!=='undefined' && ICTSTATE && typeof ICTSTATE.score!=='undefined') ? parseFloat(ICTSTATE.score) : null;
-    if(ictScore!=null && !isNaN(ictScore)){
-      const ictAdj = Math.max(-20, Math.min(20, (ictScore-50)*0.4));
-      score += ictAdj; detail.push(`ICT ${ictAdj>=0?'+':''}${ictAdj.toFixed(1)}`);
-    }
-    if((a.dow||'')==='Bullish'){ score += 10; detail.push('道氏+10'); }
-    else if((a.dow||'')==='Bearish'){ score -= 10; detail.push('道氏-10'); }
-    if((a.wyck||'').includes('Phase D') || (a.wyck||'').includes('Mark-up')){ score += 12; detail.push('威科夫+12'); }
-    else if((a.wyck||'').includes('Mark-down')){ score -= 12; detail.push('威科夫-12'); }
-    const bay = parseFloat(a.bayes||50);
-    if(bay>=60){ score += 14; detail.push('多頭機率+14'); }
-    else if(bay<40){ score -= 14; detail.push('多頭機率-14'); }
-    if((a.ofi||'').includes('Bull')){ score += 12; detail.push('OFI+12'); }
-    else if((a.ofi||'').includes('Bear')){ score -= 12; detail.push('OFI-12'); }
-    if((a.stSig||'').includes('Bull') || (a.stSig||'').includes('多頭')){ score += 8; detail.push('ST+8'); }
-    else if((a.stSig||'').includes('空頭') || (a.stSig||'').includes('Bear')){ score -= 8; detail.push('ST-8'); }
-    if((a.ttm||'').includes('已釋放')){ score += 4; detail.push('TTM+4'); }
-    else if((a.ttm||'').includes('擠壓')){ score -= 2; detail.push('TTM-2'); }
-    if(a.fakeBreak){ score -= 6; detail.push('假突破-6'); } else { score += 3; detail.push('無假突破+3'); }
-    const cs = parseFloat(a.canSc||0);
-    if(cs>=4){ score += 5; detail.push('K線+5'); } else if(cs<0){ score -= 5; detail.push('K線-5'); }
-    a.techDepthScore = Math.max(0, Math.min(100, Math.round(score)));
-    a.techDepthDetail = detail.join(' / ');
-    a.techDepthBias = a.techDepthScore>=65?'BULL':a.techDepthScore<=35?'BEAR':'NEUTRAL';
-  } catch(e){ a.techDepthScore=50; a.techDepthDetail='techDepthScore fail'; a.techDepthBias='NEUTRAL'; }
-  return a;
-}
 async function runAnalysis(tk){
   tk = normalizeTickerSymbol(tk);  // 標準化代號
   const prevTk = G.tk;
@@ -7576,7 +7616,122 @@ window.addEventListener('resize', () => {
 
 // Service Worker 登記
 if('serviceWorker' in navigator){
-  window.addEventListener('load', ()=>{
+  
+function amEl(id){ return document.getElementById(id); }
+function amDbg(id, txt, ok){ const el = amEl(id); if(!el) return; el.textContent = txt; el.style.color = ok ? '#80ffa5' : '#ffd166'; }
+function amParseManualMap(){ const raw=(amEl('amManualInput')?.value||'').trim(); const map={}; if(!raw) return map; raw.split(/\n+/).forEach(line=>{ const s=line.trim(); if(!s) return; const p=s.split(',').map(x=>x.trim()); const tk=(p[0]||'').toUpperCase(); if(!tk) return; map[tk]={ prevClose:p[1]!==undefined&&p[1]!==''?parseFloat(p[1]):null, stop:p[2]!==undefined&&p[2]!==''?parseFloat(p[2]):null, t1:p[3]!==undefined&&p[3]!==''?parseFloat(p[3]):null }; }); return map; }
+function amMarketOfTicker(tk){ return /\.TW$|\.TWO$/.test(tk)?'TW':'US'; }
+function amFmt(v){ return v==null || isNaN(v) ? '--' : (Math.abs(v)>=100 ? Number(v).toFixed(1) : Number(v).toFixed(2)); }
+function amRSIFromDaily(d){ try{ const arr = RSI(d.map(x=>+x.close),14); const v = arr[arr.length-1]; return (v==null||isNaN(v))?50:+v; }catch(e){ return 50; } }
+function amAdvice(passed, regime){
+  const minPass = ({BULL:3,WEAK_BULL:3,WEAKBULL:3,NEUTRAL:3,WEAK_BEAR:4,WEAKBEAR:4,BEAR:99})[regime] ?? 3;
+  if(regime==='BEAR') return '🚫 大盤空頭禁止';
+  if(passed < minPass) return regime.includes('WEAK_BEAR')||regime.includes('WEAKBEAR') ? `⚠ WEAK_BEAR需${minPass}/5` : `⏳ 通過${passed}/5，條件不足`;
+  if(passed===5) return '🚀 積極進場 50%倉';
+  if(passed===4) return '🟢 標準進場 33%倉';
+  return '🟡 保守試探 20%倉';
+}
+async function amGetBars(tk){
+  let daily = null, intra = null;
+  try{ if(typeof fetchKlineDirect==='function') daily = await fetchKlineDirect(tk,'1d',10); }catch(e){}
+  try{ if(typeof fetchKlineDirect==='function') intra = await fetchKlineDirect(tk,'15m',20); }catch(e){}
+  if((!daily || daily.length<2) && G && G.data && Array.isArray(G.data) && G.tk===tk) daily = G.data;
+  if((!daily || daily.length<2) && typeof genOHLCV==='function') daily = genOHLCV(tk,10);
+  if((!intra || intra.length<2) && typeof genOHLCV==='function') intra = genOHLCV(tk,20);
+  return {daily: daily||[], intra: intra||[]};
+}
+async function runMorningConfirmationScan(){
+  amDbg('dbgClick','🟢 點擊已觸發', true);
+  const raw = (amEl('amTickers')?.value || '').trim();
+  const list = amEl('amConfirmList');
+  const sum = amEl('amConfirmSummary');
+  if(!sum || !list){ console.warn('[AM] module elements missing'); return; }
+  if(!raw){
+    const mm = amParseManualMap();
+    const ks = Object.keys(mm);
+    if(ks.length===1 && amEl('amTickers')){ amEl('amTickers').value = ks[0]; }
+  }
+  const raw2 = (amEl('amTickers')?.value || '').trim();
+  if(!raw2){ sum.textContent='請先輸入候選股票'; if(typeof toast==='function') toast('請先輸入候選股票','warn',2500); return; }
+  const tickers = [...new Set(raw2.split(/[\s,]+/).map(s=>s.trim().toUpperCase()).filter(s=>s && /[A-Z]/.test(s) && !/^\d+(\.\d+)?$/.test(s)))];
+  const manualMap = amParseManualMap();
+  amDbg('dbgScan','🟡 掃描已開始', false);
+  sum.textContent = '掃描中...';
+  list.innerHTML = '';
+  const rows = [];
+  for(const tk of tickers){
+    try{
+      const bars = await amGetBars(tk);
+      const daily = bars.daily || [], intra = bars.intra || [];
+      if(!daily || daily.length < 2){ rows.push(`<div class="warn-item crit">${tk}：無法取得資料</div>`); continue; }
+      const y = daily[daily.length-2], t = daily[daily.length-1];
+      let prevClose = +(y.close ?? y.Close ?? 0), prevHigh = +(y.high ?? y.High ?? prevClose);
+      const currOpen = +(t.open ?? t.Open ?? t.close ?? t.Close ?? 0), currClose = +(t.close ?? t.Close ?? 0), currHigh = +(t.high ?? t.High ?? currClose);
+      const manual = manualMap[tk] || {};
+      if(Number.isFinite(manual.prevClose)) { prevClose = +manual.prevClose; prevHigh = prevClose * 1.01; }
+      const rsi = amRSIFromDaily(daily);
+      const body = Math.abs(currClose - currOpen), upperWick = Math.max(0, currHigh - Math.max(currClose, currOpen));
+      const condA = currOpen >= prevClose * 0.995;
+      let condB = true, volDesc = '量能資料不足';
+      if(intra && intra.length >= 2){
+        const b1 = intra[intra.length-1], b0 = intra[intra.length-2];
+        const v1 = +(b1.volume ?? b1.Volume ?? 0), v0 = +(b0.volume ?? b0.Volume ?? 1);
+        const ratio = v0 > 0 ? v1 / v0 : 1;
+        condB = ratio >= 1.2;
+        volDesc = `15分量比 ${(ratio*100).toFixed(0)}%`;
+      }
+      const condC = currHigh >= prevHigh * 1.001;
+      const condD = rsi >= 50;
+      const condE = body <= 0.01 ? true : upperWick <= body * 1.5;
+      const passed = [condA,condB,condC,condD,condE].filter(Boolean).length;
+      const regime = (G && G.an && G.an.macro) ? G.an.macro : 'NEUTRAL';
+      const stop = Number.isFinite(manual.stop) ? +manual.stop : +(prevClose * 0.926).toFixed(2);
+      const t1 = Number.isFinite(manual.t1) ? +manual.t1 : +(prevClose * 1.093).toFixed(2);
+      const advice = amAdvice(passed, regime);
+      const sym = x => x ? '✅' : '❌';
+      const entryLo = (currClose*0.997).toFixed(2), entryHi = (currClose*1.003).toFixed(2);
+      rows.push(`<div class="warn-item ${passed>=4?'pos':passed>=3?'info':'caut'}"><div style="font-weight:700;color:#00d4ff">${tk}｜${advice}</div><div>${sym(condA)}A 開盤　${sym(condB)}B 量能　${sym(condC)}C 突破　${sym(condD)}D RSI　${sym(condE)}E 無假突破 ｜ ${passed}/5</div><div style="font-size:.6rem;color:#9ec5d8">現價 ${amFmt(currClose)}｜進場區間 ${entryLo}~${entryHi}｜停損 ${amFmt(stop)}｜T1 ${amFmt(t1)}｜${volDesc}｜RSI ${Number(rsi).toFixed(1)}｜宏觀 ${regime}</div></div>`);
+    }catch(e){ rows.push(`<div class="warn-item crit">${tk}：分析失敗</div>`); }
+  }
+  list.innerHTML = rows.join('') || '<div class="warn-item caut">沒有可顯示結果</div>';
+  amDbg('dbgScan','🟢 掃描已完成', true);
+  sum.textContent = `已掃描 ${tickers.length} 檔；每檔顯示 A/B/C/D/E 與 passed/5。`;
+}
+window.runMorningConfirmationScan = runMorningConfirmationScan;
+
+(function(){
+  function ensureAMDebugUI(){
+    const sec = document.getElementById('amConfirmSec');
+    if(!sec || document.getElementById('amDebugPanel')) return;
+    const summary = document.getElementById('amConfirmSummary');
+    const box = document.createElement('div');
+    box.innerHTML = `
+      <div style="font-size:.6rem;color:#7eb8ff;line-height:1.5;margin-top:8px;margin-bottom:4px">昨日手動輸入（選填，每行 1 檔）：<br>格式：<span style="color:#ffd700">代碼,昨收,停損,T1</span>，例如 <span style="color:#ffd700">2330.TW,1834.0,1700,230.03</span></div>
+      <textarea id="amManualInput" class="a-inp" style="width:100%;min-height:74px;resize:vertical;line-height:1.45" placeholder="2330.TW,1834.0,1700,230.03&#10;AMGN,320.5,297,348"></textarea>
+      <div id="amDebugPanel" style="margin-top:8px;padding:7px 8px;border:1px solid rgba(0,212,255,.2);background:rgba(0,212,255,.05);border-radius:4px;font-size:.6rem;color:#9ec5d8;line-height:1.55">
+        <div>除錯狀態：<span id="dbgLoad">⏳ 模組待確認</span>｜<span id="dbgBind">⏳ 按鈕待綁定</span>｜<span id="dbgClick">⏳ 尚未點擊</span>｜<span id="dbgScan">⏳ 尚未掃描</span></div>
+      </div>`;
+    if(summary) sec.insertBefore(box, summary); else sec.appendChild(box);
+  }
+  window.ensureAMDebugUI = ensureAMDebugUI;
+})();
+
+(function(){
+  function bindAM(){
+    const runBtn = amEl('amRunBtn'), useBtn = amEl('amUseCurrentBtn'), inp = amEl('amTickers'), sum = amEl('amConfirmSummary');
+    ensureAMDebugUI();
+    amDbg('dbgLoad','🟢 模組已載入', true);
+    if(sum) sum.textContent = '模組已就緒，請輸入代碼後按掃描';
+    if(runBtn && !runBtn.dataset.bound){ runBtn.dataset.bound='1'; runBtn.onclick = runMorningConfirmationScan; amDbg('dbgBind','🟢 按鈕已綁定', true); }
+    if(useBtn && !useBtn.dataset.bound){ useBtn.dataset.bound='1'; useBtn.onclick = ()=>{ const el=amEl('amTickers'); if(el) el.value=((el.value||'').trim()?el.value+' ':'') + ((G&&G.tk)?G.tk:''); }; }
+    if(inp && !inp.dataset.bound){ inp.dataset.bound='1'; inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); runMorningConfirmationScan(); } }); }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindAM); else bindAM();
+  window.addEventListener('load', bindAM);
+  setTimeout(bindAM, 1200);
+})();
+
+window.addEventListener('load', ()=>{
     navigator.serviceWorker.register('./sw.js')
       .then(reg=>{ console.log('[SW] 已登記:', reg.scope); })
       .catch(e=>  { console.warn('[SW] 登記失敗:', e); });
@@ -7609,3 +7764,58 @@ window.installPWA = async ()=>{
 </script>
 </body>
 </html>
+
+$('amRunBtn')?.addEventListener('click', runMorningConfirmationScan);
+$('amUseCurrentBtn')?.addEventListener('click', ()=>{ const el=$('amTickers'); if(el) el.value = ((el.value||'').trim()?el.value+' ':'') + (G.tk||''); });
+
+window.runMorningConfirmationScan = runMorningConfirmationScan;
+
+(function(){
+  function ensureAMDebugUI(){
+    const sec = document.getElementById('amConfirmSec');
+    if(!sec || document.getElementById('amDebugPanel')) return;
+    const summary = document.getElementById('amConfirmSummary');
+    const box = document.createElement('div');
+    box.innerHTML = `
+      <div style="font-size:.6rem;color:#7eb8ff;line-height:1.5;margin-top:8px;margin-bottom:4px">昨日手動輸入（選填，每行 1 檔）：<br>格式：<span style="color:#ffd700">代碼,昨收,停損,T1</span>，例如 <span style="color:#ffd700">2330.TW,1834.0,1700,230.03</span></div>
+      <textarea id="amManualInput" class="a-inp" style="width:100%;min-height:74px;resize:vertical;line-height:1.45" placeholder="2330.TW,1834.0,1700,230.03&#10;AMGN,320.5,297,348"></textarea>
+      <div id="amDebugPanel" style="margin-top:8px;padding:7px 8px;border:1px solid rgba(0,212,255,.2);background:rgba(0,212,255,.05);border-radius:4px;font-size:.6rem;color:#9ec5d8;line-height:1.55">
+        <div>除錯狀態：<span id="dbgLoad">⏳ 模組待確認</span>｜<span id="dbgBind">⏳ 按鈕待綁定</span>｜<span id="dbgClick">⏳ 尚未點擊</span>｜<span id="dbgScan">⏳ 尚未掃描</span></div>
+      </div>`;
+    if(summary) sec.insertBefore(box, summary); else sec.appendChild(box);
+  }
+  window.ensureAMDebugUI = ensureAMDebugUI;
+})();
+
+
+
+(function initMorningConfirmationModule(){
+  function bindMorningScan(){
+    try{
+      const runBtn = document.getElementById('amRunBtn');
+      const useBtn = document.getElementById('amUseCurrentBtn');
+      const inp = document.getElementById('amTickers');
+      if(runBtn && !runBtn.dataset.bound){
+        runBtn.dataset.bound='1';
+        runBtn.addEventListener('click', ()=>{ runMorningConfirmationScan(); });
+      }
+      if(useBtn && !useBtn.dataset.bound){
+        useBtn.dataset.bound='1';
+        useBtn.addEventListener('click', ()=>{
+          const el=document.getElementById('amTickers');
+          if(el) el.value=((el.value||'').trim()?el.value+' ':'') + (G?.tk||'');
+        });
+      }
+      if(inp && !inp.dataset.bound){
+        inp.dataset.bound='1';
+        inp.addEventListener('keydown', e=>{ if(e.key==='Enter'){ e.preventDefault(); runMorningConfirmationScan(); } });
+      }
+      const sum = document.getElementById('amConfirmSummary');
+      if(sum && !sum.dataset.ready){ sum.dataset.ready='1'; sum.textContent='模組已就緒，請輸入代碼後按掃描'; }
+    } catch(e){ console.warn('[morning-confirm-bind] fail', e); }
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bindMorningScan);
+  else bindMorningScan();
+  window.addEventListener('load', bindMorningScan);
+  setTimeout(bindMorningScan, 800);
+})();
