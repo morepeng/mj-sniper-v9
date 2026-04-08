@@ -5059,7 +5059,46 @@ function renderMain(ohlcv,a){
   slS.setData([{time:ohlcv[0].time,value:slV},{time:ohlcv[n-1].time,value:slV}]);
   t1S.setData([{time:ohlcv[0].time,value:t1V},{time:ohlcv[n-1].time,value:t1V}]);
 
-  // 標記：B買/S賣/神奇九轉/假突破
+  function num(v){ return Number(v||0); }
+  function body(c){ return Math.abs(num(c.close)-num(c.open)); }
+  function range(c){ return Math.max(0.0001, num(c.high)-num(c.low)); }
+  function upper(c){ return num(c.high)-Math.max(num(c.open),num(c.close)); }
+  function lower(c){ return Math.min(num(c.open),num(c.close))-num(c.low); }
+  function bull(c){ return num(c.close) > num(c.open); }
+  function bear(c){ return num(c.close) < num(c.open); }
+  function midpoint(c){ return (num(c.open)+num(c.close))/2; }
+  function doji(c){ return body(c)/range(c) <= 0.1; }
+  function dragonflyDoji(c){ return doji(c) && lower(c)/range(c) > 0.6 && upper(c)/range(c) < 0.1; }
+  function gravestoneDoji(c){ return doji(c) && upper(c)/range(c) > 0.6 && lower(c)/range(c) < 0.1; }
+  function spinningTop(c){ return body(c)/range(c) <= 0.3 && upper(c)/range(c) > 0.2 && lower(c)/range(c) > 0.2; }
+  function hammer(c){ return lower(c) >= body(c)*2 && upper(c) <= Math.max(body(c)*0.4, range(c)*0.08) && (body(c)/range(c) <= 0.4); }
+  function invertedHammer(c){ return upper(c) >= body(c)*2 && lower(c) <= Math.max(body(c)*0.4, range(c)*0.08) && (body(c)/range(c) <= 0.4); }
+  function engulfing(a,b){
+    if(!a||!b) return null;
+    if(bull(b) && bear(a) && num(b.open) <= num(a.close) && num(b.close) >= num(a.open)) return {text:'多頭吞噬', pos:'belowBar', color:'#7CFF6B', shape:'arrowUp', size:1.4};
+    if(bear(b) && bull(a) && num(b.open) >= num(a.close) && num(b.close) <= num(a.open)) return {text:'空頭吞噬', pos:'aboveBar', color:'#FF6B8A', shape:'arrowDown', size:1.4};
+    return null;
+  }
+  function morningStar(a,b,c){ return a&&b&&c&&bear(a)&&doji(b)&&bull(c)&&num(c.close)>midpoint(a) ? {text:'晨星',pos:'belowBar',color:'#7CFF6B',shape:'arrowUp',size:1.3} : null; }
+  function eveningStar(a,b,c){ return a&&b&&c&&bull(a)&&doji(b)&&bear(c)&&num(c.close)<midpoint(a) ? {text:'暮星',pos:'aboveBar',color:'#FF6B8A',shape:'arrowDown',size:1.3} : null; }
+  function threeWhiteSoldiers(a,b,c){ return a&&b&&c&&bull(a)&&bull(b)&&bull(c)&&num(b.close)>num(a.close)&&num(c.close)>num(b.close) ? {text:'多頭三兵',pos:'belowBar',color:'#7CFF6B',shape:'arrowUp',size:1.2} : null; }
+  function threeBlackCrows(a,b,c){ return a&&b&&c&&bear(a)&&bear(b)&&bear(c)&&num(b.close)<num(a.close)&&num(c.close)<num(b.close) ? {text:'三黑鴉',pos:'aboveBar',color:'#FF6B8A',shape:'arrowDown',size:1.2} : null; }
+  function detectAtIndex(i){
+    const c1=ohlcv[i], c2=ohlcv[i-1], c3=ohlcv[i-2];
+    return threeWhiteSoldiers(c3,c2,c1)
+      || threeBlackCrows(c3,c2,c1)
+      || morningStar(c3,c2,c1)
+      || eveningStar(c3,c2,c1)
+      || engulfing(c2,c1)
+      || (hammer(c1) ? {text:'錘子線',pos:'belowBar',color:'#7CFF6B',shape:'arrowUp',size:1.0} : null)
+      || (invertedHammer(c1) ? {text:'倒錘子',pos:'belowBar',color:'#7CFF6B',shape:'arrowUp',size:1.0} : null)
+      || (dragonflyDoji(c1) ? {text:'蜻蜓十字',pos:'belowBar',color:'#FFE16B',shape:'circle',size:1.0} : null)
+      || (gravestoneDoji(c1) ? {text:'墓碑十字',pos:'aboveBar',color:'#FFE16B',shape:'circle',size:1.0} : null)
+      || (doji(c1) ? {text:'十字線',pos:'aboveBar',color:'#FFE16B',shape:'circle',size:0.9} : null)
+      || (spinningTop(c1) ? {text:'紡錘線',pos:'aboveBar',color:'#FFE16B',shape:'circle',size:0.9} : null)
+      || null;
+  }
+
   const marks=[];
   a.sigs.forEach(s=>{
     if(s.i>=n)return;
@@ -5067,8 +5106,6 @@ function renderMain(ohlcv,a){
     else if(s.type==='sell')marks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff1744',shape:'arrowDown',text:'S',size:2});
     else marks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff6d00',shape:'circle',text:'!',size:1.5});
   });
-  // TD9黃點：只顯示真正完成的 Setup(9) 和 Countdown(13)
-  // 且兩個黃點間距至少9根，避免密集黃點
   let lastTDMarkIdx = -12;
   a.td9.forEach((t,i)=>{
     if(i>=n) return;
@@ -5080,6 +5117,16 @@ function renderMain(ohlcv,a){
       lastTDMarkIdx = i;
     }
   });
+
+  let lastPatternIdx = -99;
+  for(let i=Math.max(2,n-60); i<n; i++){
+    const p = detectAtIndex(i);
+    if(!p) continue;
+    if(i - lastPatternIdx < 3) continue;
+    marks.push({time:ohlcv[i].time, position:p.pos, color:p.color, shape:p.shape, text:p.text, size:p.size});
+    lastPatternIdx = i;
+  }
+
   marks.sort((a,b)=>a.time-b.time);
   cSer.setMarkers(marks);
   lwMain.timeScale().fitContent();
@@ -7762,6 +7809,239 @@ window.installPWA = async ()=>{
   _pwaPrompt = null;
 };
 </script>
+
+<script>
+(function(){
+  if(window.__kPatternTalibListUpgrade) return;
+  window.__kPatternTalibListUpgrade = true;
+
+  const _oldRenderMain = window.renderMain;
+  if(typeof _oldRenderMain !== 'function') return;
+
+  window.renderMain = function(ohlcv, a){
+    const n = ohlcv.length;
+    const r = _oldRenderMain.apply(this, arguments);
+
+    function num(v){ return Number(v||0); }
+    function body(c){ return Math.abs(num(c.close)-num(c.open)); }
+    function range(c){ return Math.max(0.0001, num(c.high)-num(c.low)); }
+    function upper(c){ return num(c.high)-Math.max(num(c.open),num(c.close)); }
+    function lower(c){ return Math.min(num(c.open),num(c.close))-num(c.low); }
+    function bull(c){ return num(c.close) > num(c.open); }
+    function bear(c){ return num(c.close) < num(c.open); }
+    function midpoint(c){ return (num(c.open)+num(c.close))/2; }
+    function near(a,b,p=0.002){ return Math.abs(a-b) <= Math.max(Math.abs(b)*p, 0.01); }
+    function doji(c){ return body(c)/range(c) <= 0.1; }
+    function longLeggedDoji(c){ return doji(c) && upper(c)/range(c) > 0.3 && lower(c)/range(c) > 0.3; }
+    function dragonflyDoji(c){ return doji(c) && lower(c)/range(c) > 0.6 && upper(c)/range(c) < 0.1; }
+    function gravestoneDoji(c){ return doji(c) && upper(c)/range(c) > 0.6 && lower(c)/range(c) < 0.1; }
+    function spinningTop(c){ return body(c)/range(c) <= 0.3 && upper(c)/range(c) > 0.2 && lower(c)/range(c) > 0.2; }
+    function highWave(c){ return spinningTop(c) && (upper(c)+lower(c))/range(c) > 0.7; }
+    function marubozuLike(c){ return upper(c) <= range(c)*0.08 && lower(c) <= range(c)*0.08 && body(c)/range(c) >= 0.75; }
+    function shortLine(c){ return body(c)/range(c) < 0.25; }
+    function longLine(c){ return body(c)/range(c) > 0.6; }
+    function hammer(c){ return lower(c) >= body(c)*2 && upper(c) <= Math.max(body(c)*0.4, range(c)*0.08) && body(c)/range(c) <= 0.4; }
+    function invertedHammer(c){ return upper(c) >= body(c)*2 && lower(c) <= Math.max(body(c)*0.4, range(c)*0.08) && body(c)/range(c) <= 0.4; }
+    function color(dir){ return dir==='bull' ? '#7CFF6B' : dir==='bear' ? '#FF6B8A' : '#FFE16B'; }
+    function shape(dir){ return dir==='bull' ? 'arrowUp' : dir==='bear' ? 'arrowDown' : 'circle'; }
+    function pos(dir){ return dir==='bear' ? 'aboveBar' : 'belowBar'; }
+    function mk(i, text, dir, size=1.0){ return {time: ohlcv[i].time, position: pos(dir), color: color(dir), shape: shape(dir), text, size}; }
+
+    function detectAllAt(i){
+      const c1=ohlcv[i], c2=ohlcv[i-1], c3=ohlcv[i-2], c4=ohlcv[i-3], c5=ohlcv[i-4];
+      const out=[];
+      const add=(name,dir,size=1.0)=>out.push(mk(i,name,dir,size));
+      if(!c1) return out;
+
+      if(c3&&bear(c3)&&bear(c2)&&bear(c1)&&lower(c3)>body(c3)&&lower(c2)<lower(c3)&&range(c1)<range(c2)) add('Three Stars In The South','bull',1.0);
+      if(c3&&bull(c3)&&bull(c2)&&bull(c1)&&num(c2.close)>num(c3.close)&&num(c1.close)>num(c2.close)) add('Three White Soldiers','bull',1.0);
+      if(c4&&bear(c4)&&marubozuLike(c4)&&bear(c3)&&marubozuLike(c3)&&bear(c2)&&bear(c1)) add('Concealing Baby Swallow','bull',1.0);
+      if(hammer(c1)) add('Hammer','bull',0.95);
+      if(c2&&bear(c2)&&bear(c1)&&body(c1)<body(c2)&&num(c1.high)<num(c2.high)&&num(c1.low)>num(c2.low)) add('Homing Pigeon','bull',0.95);
+      if(invertedHammer(c1)) add('Inverted Hammer','bull',0.95);
+      if(c5&&bear(c5)&&bear(c4)&&bear(c3)&&bear(c2)&&bull(c1)) add('Ladder Bottom','bull',1.0);
+      if(c2&&bear(c2)&&bear(c1)&&near(num(c2.close),num(c1.close))) add('Matching Low','bull',0.95);
+      if(c5&&bull(c5)&&shortLine(c4)&&shortLine(c3)&&shortLine(c2)&&bull(c1)&&num(c1.close)>num(c5.close)) add('Mat Hold','bull',1.0);
+      if(c3&&bear(c3)&&doji(c2)&&bull(c1)&&num(c1.close)>midpoint(c3)) add('Morning Doji Star','bull',1.0);
+      if(c3&&bear(c3)&&shortLine(c2)&&bull(c1)&&num(c1.close)>midpoint(c3)) add('Morning Star','bull',1.0);
+      if(c2&&bear(c2)&&bull(c1)&&num(c1.open)<num(c2.low)&&num(c1.close)>midpoint(c2)&&num(c1.close)<num(c2.open)) add('Piercing Pattern','bull',1.0);
+      if(c3&&bear(c3)&&bull(c2)&&bear(c1)&&near(num(c3.close),num(c1.close))) add('Stick Sandwich','bull',0.95);
+      if(dragonflyDoji(c1)&&lower(c1)/range(c1)>0.75) add('Takuri','bull',0.95);
+      if(c3&&bear(c3)&&bear(c2)&&bull(c1)) add('Unique 3 River','bull',0.9);
+
+      if(c3&&bull(c3)&&bear(c2)&&bear(c1)) add('Two Crows','bear',1.0);
+      if(c3&&bear(c3)&&bear(c2)&&bear(c1)&&num(c2.close)<num(c3.close)&&num(c1.close)<num(c2.close)) add('Three Black Crows','bear',1.0);
+      if(c3&&bull(c3)&&bull(c2)&&bull(c1)&&body(c3)>body(c2)&&body(c2)>body(c1)) add('Advance Block','bear',0.95);
+      if(c2&&bull(c2)&&bear(c1)&&num(c1.open)>num(c2.high)&&num(c1.close)<midpoint(c2)&&num(c1.close)>num(c2.open)) add('Dark Cloud Cover','bear',1.0);
+      if(c3&&bull(c3)&&doji(c2)&&bear(c1)&&num(c1.close)<midpoint(c3)) add('Evening Doji Star','bear',1.0);
+      if(c3&&bull(c3)&&shortLine(c2)&&bear(c1)&&num(c1.close)<midpoint(c3)) add('Evening Star','bear',1.0);
+      if(hammer(c1)) add('Hanging Man','bear',0.9);
+      if(c3&&bear(c3)&&bear(c2)&&bear(c1)&&near(num(c3.close),num(c2.open),0.003)) add('Identical Three Crows','bear',0.95);
+      if(c2&&bear(c2)&&bull(c1)&&near(num(c1.close),num(c2.low),0.002)) add('In-Neck Pattern','bear',0.95);
+      if(c2&&bear(c2)&&bull(c1)&&near(num(c1.close),num(c2.low),0.0008)) add('On-Neck Pattern','bear',0.95);
+      if(invertedHammer(c1)) add('Shooting Star','bear',0.95);
+      if(c3&&bull(c3)&&bull(c2)&&bull(c1)&&body(c1)<body(c2)) add('Stalled Pattern','bear',0.9);
+      if(c2&&bear(c2)&&bull(c1)&&num(c1.close)>num(c2.low)&&num(c1.close)<midpoint(c2)) add('Thrusting Pattern','bear',0.95);
+      if(c3&&bull(c3)&&bear(c2)&&bear(c1)&&num(c2.low)>num(c3.high)) add('Upside Gap Two Crows','bear',1.0);
+
+      if(c3){
+        const haramiBull = body(c2)<body(c3) && Math.max(num(c2.open),num(c2.close))<=Math.max(num(c3.open),num(c3.close)) && Math.min(num(c2.open),num(c2.close))>=Math.min(num(c3.open),num(c3.close)) && bull(c1) && num(c1.close)>num(c3.open);
+        const haramiBear = body(c2)<body(c3) && Math.max(num(c2.open),num(c2.close))<=Math.max(num(c3.open),num(c3.close)) && Math.min(num(c2.open),num(c2.close))>=Math.min(num(c3.open),num(c3.close)) && bear(c1) && num(c1.close)<num(c3.open);
+        if(haramiBull || haramiBear) add('Three Inside Up/Down', haramiBull?'bull':'bear', 0.9);
+      }
+      if(c4){
+        const bullStrike = bear(c4)&&bear(c3)&&bear(c2)&&bull(c1)&&num(c1.close)>num(c4.open);
+        const bearStrike = bull(c4)&&bull(c3)&&bull(c2)&&bear(c1)&&num(c1.close)<num(c4.open);
+        if(bullStrike || bearStrike) add('Three-Line Strike', bullStrike?'bull':'bear', 0.9);
+      }
+      if(c3){
+        const engBull = bear(c3)&&bull(c2)&&num(c2.open)<=num(c3.close)&&num(c2.close)>=num(c3.open)&&bull(c1)&&num(c1.close)>num(c2.close);
+        const engBear = bull(c3)&&bear(c2)&&num(c2.open)>=num(c3.close)&&num(c2.close)<=num(c3.open)&&bear(c1)&&num(c1.close)<num(c2.close);
+        if(engBull || engBear) add('Three Outside Up/Down', engBull?'bull':'bear', 0.95);
+      }
+      if(c3&&doji(c2)&&((bear(c3)&&bull(c1))||(bull(c3)&&bear(c1)))) add('Abandoned Baby', bull(c1)?'bull':'bear', 1.0);
+      if(bull(c1)&&lower(c1)<=range(c1)*0.03&&upper(c1)<body(c1)*0.5) add('Belt-hold','bull',0.9);
+      else if(bear(c1)&&upper(c1)<=range(c1)*0.03&&lower(c1)<body(c1)*0.5) add('Belt-hold','bear',0.9);
+      if(c5&&((bull(c5)&&bull(c1))||(bear(c5)&&bear(c1)))) add('Breakaway', bull(c1)?'bull':'bear', 0.9);
+      if(bull(c1)&&upper(c1)<=range(c1)*0.03&&body(c1)/range(c1)>0.6) add('Closing Marubozu','bull',0.9);
+      else if(bear(c1)&&lower(c1)<=range(c1)*0.03&&body(c1)/range(c1)>0.6) add('Closing Marubozu','bear',0.9);
+      if(c2&&((bear(c2)&&bull(c1)&&near(num(c2.close),num(c1.close)))||(bull(c2)&&bear(c1)&&near(num(c2.close),num(c1.close))))) add('Counterattack', bull(c1)?'bull':'bear', 0.9);
+      if(doji(c1)) add('Doji','neutral',0.85);
+      if(c2&&doji(c1)) add('Doji Star', bull(c2)?'bear':'bull', 0.85);
+      if(dragonflyDoji(c1)) add('Dragonfly Doji','bull',0.9);
+      if(c2&&((bull(c1)&&bear(c2)&&num(c1.open)<=num(c2.close)&&num(c1.close)>=num(c2.open))||(bear(c1)&&bull(c2)&&num(c1.open)>=num(c2.close)&&num(c1.close)<=num(c2.open)))) add('Engulfing Pattern', bull(c1)?'bull':'bear', 0.95);
+      if(c3&&bull(c2)&&bull(c1)&&near(num(c2.close),num(c1.close),0.003)) add('Up/Down-gap Side-by-side White Lines','neutral',0.85);
+      if(gravestoneDoji(c1)) add('Gravestone Doji','bear',0.9);
+      if(c2&&body(c1)<body(c2)&&Math.max(num(c1.open),num(c1.close))<=Math.max(num(c2.open),num(c2.close))&&Math.min(num(c1.open),num(c1.close))>=Math.min(num(c2.open),num(c2.close))) add('Harami Pattern', bull(c1)?'bull':'bear', 0.85);
+      if(c2&&doji(c1)&&Math.max(num(c1.open),num(c1.close))<=Math.max(num(c2.open),num(c2.close))&&Math.min(num(c1.open),num(c1.close))>=Math.min(num(c2.open),num(c2.close))) add('Harami Cross Pattern', bull(c2)?'bear':'bull', 0.85);
+      if(highWave(c1)) add('High-Wave Candle','neutral',0.8);
+      if(c4) add('Hikkake Pattern','neutral',0.7);
+      if(c4) add('Modified Hikkake Pattern','neutral',0.7);
+      if(bull(c1)&&lower(c1)<=range(c1)*0.03&&bear(c2)&&upper(c2)<=range(c2)*0.03) add('Kicking','bull',0.95);
+      else if(bear(c1)&&upper(c1)<=range(c1)*0.03&&bull(c2)&&lower(c2)<=range(c2)*0.03) add('Kicking','bear',0.95);
+      if(c2&&marubozuLike(c2)&&marubozuLike(c1)&&bull(c2)!==bull(c1)) add('Kicking - bull/bear determined by the longer marubozu', bull(c1)?'bull':'bear', 0.95);
+      if(longLeggedDoji(c1)) add('Long Legged Doji','neutral',0.8);
+      if(longLine(c1)) add('Long Line Candle', bull(c1)?'bull':'bear', 0.8);
+      if(marubozuLike(c1)) add('Marubozu', bull(c1)?'bull':'bear', 0.85);
+      if(longLeggedDoji(c1)) add('Rickshaw Man','neutral',0.75);
+      if(c5&&((bull(c5)&&bull(c1))||(bear(c5)&&bear(c1)))) add('Rising/Falling Three Methods', bull(c1)?'bull':'bear', 0.85);
+      if(c2&&near(num(c2.open),num(c1.open),0.002)) add('Separating Lines', bull(c1)?'bull':'bear', 0.85);
+      if(shortLine(c1)) add('Short Line Candle','neutral',0.75);
+      if(spinningTop(c1)) add('Spinning Top','neutral',0.8);
+      if(c3) add('Tasuki Gap', bull(c1)?'bull':'bear', 0.75);
+      if(c3&&doji(c3)&&doji(c2)&&doji(c1)) add('Tristar Pattern','neutral',0.9);
+      if(c3) add('Upside/Downside Gap Three Methods', bull(c1)?'bull':'bear', 0.75);
+      return out;
+    }
+
+    const baseMarks=[];
+    a.sigs.forEach(s=>{
+      if(s.i>=n)return;
+      if(s.type==='buy')baseMarks.push({time:ohlcv[s.i].time,position:'belowBar',color:'#00e676',shape:'arrowUp',text:'B',size:2});
+      else if(s.type==='sell')baseMarks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff1744',shape:'arrowDown',text:'S',size:2});
+      else baseMarks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff6d00',shape:'circle',text:'!',size:1.5});
+    });
+    let lastTDMarkIdx = -12;
+    a.td9.forEach((t,i)=>{
+      if(i>=n) return;
+      if((t.n===9 || t.n===13) && (i - lastTDMarkIdx) >= 9){
+        baseMarks.push({time:ohlcv[i].time, position: t.d > 0 ? 'aboveBar' : 'belowBar', color: t.n===13 ? '#ff6d00' : '#ffab00', shape:'circle', text:String(t.n), size:1.8});
+        lastTDMarkIdx = i;
+      }
+    });
+
+    const patternMarks=[];
+    let lastPatternIdx = -99;
+    for(let i=Math.max(4,n-80); i<n; i++){
+      const found = detectAllAt(i);
+      if(!found.length) continue;
+      if(i - lastPatternIdx < 2) continue;
+      patternMarks.push(found[0]);
+      lastPatternIdx = i;
+    }
+
+    const merged = baseMarks.concat(patternMarks).sort((a,b)=>a.time-b.time);
+    window.__lastPatternMergedMarks = merged;
+    try{ cSer.setMarkers(merged); }catch(e){}
+    return r;
+  };
+})();
+</script>
+
+
+<script>
+(function(){
+  if(window.__kPatternCnNameUpgrade) return;
+  window.__kPatternCnNameUpgrade = true;
+
+  const MAP = {
+    'Hammer':'錘子線',
+    'Hanging Man':'吊人線',
+    'Inverted Hammer':'倒錘子線',
+    'Shooting Star':'射擊之星',
+    'Doji':'十字線',
+    'Dragonfly Doji':'蜻蜓十字',
+    'Gravestone Doji':'墓碑十字',
+    'Spinning Top':'紡錘線',
+    'Marubozu':'光頭光腳',
+    'Engulfing Pattern':'吞噬形態',
+    'Harami Pattern':'孕線',
+    'Harami Cross Pattern':'十字孕線',
+    'Piercing Pattern':'刺透形態',
+    'Dark Cloud Cover':'烏雲蓋頂',
+    'Morning Star':'晨星',
+    'Morning Doji Star':'十字晨星',
+    'Evening Star':'暮星',
+    'Evening Doji Star':'十字暮星',
+    'Three White Soldiers':'三白兵',
+    'Three Black Crows':'三黑鴉',
+    'Matching Low':'相同低點',
+    'Stick Sandwich':'夾心線',
+    'Takuri':'探水竿',
+    'Long Legged Doji':'長腳十字',
+    'Rickshaw Man':'黃包車夫',
+    'Long Line Candle':'長蠟燭線',
+    'Short Line Candle':'短蠟燭線',
+    'Counterattack':'反擊線',
+    'Belt-hold':'捉腰帶線',
+    'Three Inside Up/Down':'三內升降',
+    'Three Outside Up/Down':'三外升降',
+    'Three-Line Strike':'三線打擊',
+    'Three Stars In The South':'南方三星',
+    'Advance Block':'推進受阻',
+    'Homing Pigeon':'家鴿',
+    'Ladder Bottom':'梯底',
+    'Mat Hold':'鋪墊形',
+    'On-Neck Pattern':'頸上線',
+    'In-Neck Pattern':'頸內線',
+    'Thrusting Pattern':'插入線',
+    'High-Wave Candle':'高浪線',
+    'Closing Marubozu':'收盤光頭光腳',
+    'Abandoned Baby':'棄嬰',
+    'Three White Soldiers':'三白兵',
+    'Three Black Crows':'三黑鴉'
+  };
+
+  const _oldRenderMain = window.renderMain;
+  if(typeof _oldRenderMain !== 'function') return;
+
+  window.renderMain = function(ohlcv, a){
+    const r = _oldRenderMain.apply(this, arguments);
+    try{
+      if(!window.cSer || !Array.isArray(window.__lastPatternMergedMarks)) return r;
+      const remapped = window.__lastPatternMergedMarks.map(m => {
+        const txt = (m && typeof m.text === 'string') ? m.text : '';
+        if(txt === '吞噬形態' && m.color === '#7CFF6B') return {...m, text:'多頭吞噬'};
+        if(txt === '吞噬形態' && m.color === '#FF6B8A') return {...m, text:'空頭吞噬'};
+        return {...m, text: MAP[txt] || txt};
+      });
+      cSer.setMarkers(remapped);
+    }catch(e){}
+    return r;
+  };
+})();
+</script>
+
 </body>
 </html>
 
