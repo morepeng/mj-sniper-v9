@@ -923,6 +923,25 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   .app { grid-template-columns: 210px 1fr 210px !important; }
 }
 </style>
+<style>
+.q6-tabs{display:flex;flex-wrap:wrap;gap:4px;margin-bottom:8px}
+.q6-tab{font-family:var(--fm);font-size:.56rem;font-weight:700;padding:3px 7px;border-radius:3px;
+  border:1px solid #1a3550;color:#5a8aa8;cursor:pointer;transition:.2s;background:#070e19}
+.q6-tab:hover,.q6-tab.on{background:#0a1e36;color:#00d4ff;border-color:#00d4ff}
+.q6-pane{display:none}.q6-pane.on{display:block}
+.q6-row{display:flex;justify-content:space-between;align-items:center;padding:4px 0;border-bottom:1px solid #0e1f33}
+.q6-row:last-child{border-bottom:none}
+.q6-lbl{font-size:.6rem;color:#5a8aa8}
+.q6-v{font-family:var(--fm);font-size:.7rem;font-weight:700;color:#9ec5d8}
+.q6-bull{color:#00e676!important}.q6-bear{color:#ff5252!important}.q6-warn{color:#ffd54f!important}
+.q6-badge{display:inline-block;padding:1px 6px;border-radius:999px;font-size:.56rem;font-weight:700}
+.q6-badge.bull{background:rgba(0,230,118,.18);color:#00e676;border:1px solid rgba(0,230,118,.35)}
+.q6-badge.bear{background:rgba(255,82,82,.18);color:#ff5252;border:1px solid rgba(255,82,82,.35)}
+.q6-badge.warn{background:rgba(255,213,79,.18);color:#ffd54f;border:1px solid rgba(255,213,79,.35)}
+.q6-ai{background:#050c14;border:1px solid #1a3550;border-radius:4px;padding:7px 9px;margin-top:4px;font-size:.59rem;line-height:1.65;color:#9ec5d8}
+.q6-ai b{color:#00d4ff}
+.q6-mindset{margin-top:6px;padding:6px 8px;border-radius:4px;font-size:.59rem;line-height:1.6;border:1px solid #152d4a;background:#050c14;color:#ffd54f}
+</style>
 </head>
 <body>
 <div class="app">
@@ -1530,6 +1549,52 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   <div class="sec">
     <div class="sec-title">🔬 技術深度（8項）</div>
     <div class="tech-grid" id="techGrid"></div>
+  </div>
+
+
+  <div class="sec" id="q6Module">
+    <div class="sec-title">👑 Queen怜六大技巧</div>
+    <div class="q6-tabs">
+      <div class="q6-tab on" data-q6="zigzag">N字法</div>
+      <div class="q6-tab" data-q6="gap">跳空</div>
+      <div class="q6-tab" data-q6="ma">均線</div>
+      <div class="q6-tab" data-q6="channel">軌道</div>
+      <div class="q6-tab" data-q6="hs">頭肩頂</div>
+      <div class="q6-tab" data-q6="ai">AI建議</div>
+    </div>
+    <div class="q6-pane on" id="q6-zigzag">
+      <div class="q6-row"><span class="q6-lbl">最近波段方向</span><span class="q6-v" id="q6-zz-dir">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">波段幅度</span><span class="q6-v" id="q6-zz-pct">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">最近轉折高點</span><span class="q6-v q6-bull" id="q6-zz-hi">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">最近轉折低點</span><span class="q6-v q6-bear" id="q6-zz-lo">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">N字訊號</span><span class="q6-v" id="q6-zz-sig">—</span></div>
+    </div>
+    <div class="q6-pane" id="q6-gap">
+      <div class="q6-row"><span class="q6-lbl">近期跳空數</span><span class="q6-v" id="q6-gap-count">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">最近跳空方向</span><span class="q6-v" id="q6-gap-dir">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">最近跳空日期</span><span class="q6-v" id="q6-gap-date">—</span></div>
+    </div>
+    <div class="q6-pane" id="q6-ma">
+      <div class="q6-row"><span class="q6-lbl">MA5</span><span class="q6-v" id="q6-ma5">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">MA20</span><span class="q6-v" id="q6-ma20">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">MA60</span><span class="q6-v" id="q6-ma60">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">均線排列</span><span class="q6-v" id="q6-ma-align">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">收盤 vs 均線</span><span class="q6-v" id="q6-ma-pos">—</span></div>
+    </div>
+    <div class="q6-pane" id="q6-channel">
+      <div class="q6-row"><span class="q6-lbl">上軌</span><span class="q6-v q6-bear" id="q6-ch-up">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">中軌（趨勢）</span><span class="q6-v" id="q6-ch-mid">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">下軌</span><span class="q6-v q6-bull" id="q6-ch-lo">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">目前位置</span><span class="q6-v" id="q6-ch-pos">—</span></div>
+      <div class="q6-row"><span class="q6-lbl">通道方向</span><span class="q6-v" id="q6-ch-dir">—</span></div>
+    </div>
+    <div class="q6-pane" id="q6-hs">
+      <div id="q6-hs-inner"><div class="q6-row"><span class="q6-lbl" style="color:#5a8aa8">等待分析資料…</span></div></div>
+    </div>
+    <div class="q6-pane" id="q6-ai">
+      <div class="q6-ai" id="q6-ai-content">等待分析…</div>
+      <div class="q6-mindset">💡 型態只是線索，紀律+系統才是獲利關鍵！<br>交易就像坐錯高鐵，先下車停損再等下一班。</div>
+    </div>
   </div>
 
 </aside>
@@ -5632,6 +5697,7 @@ async function runAnalysis(tk){
   $('btRunBtn').textContent='▶ 執行回測（'+ohlcv.length+'根K線）';
 
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
+  if(typeof window.renderQ6==="function") window.renderQ6(ohlcv);
 
   ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
   // 手機：分析完成自動跳到 AI決策面板
@@ -7961,87 +8027,192 @@ window.installPWA = async ()=>{
     }
 
     const merged = baseMarks.concat(patternMarks).sort((a,b)=>a.time-b.time);
-    window.__lastPatternMergedMarks = merged;
     try{ cSer.setMarkers(merged); }catch(e){}
     return r;
   };
 })();
 </script>
 
-
 <script>
 (function(){
-  if(window.__kPatternCnNameUpgrade) return;
-  window.__kPatternCnNameUpgrade = true;
+  // Tab switch
+  document.addEventListener('click',function(e){
+    const t=e.target.closest('.q6-tab');
+    if(!t)return;
+    const mod=document.getElementById('q6Module');
+    if(!mod)return;
+    mod.querySelectorAll('.q6-tab').forEach(x=>x.classList.remove('on'));
+    mod.querySelectorAll('.q6-pane').forEach(x=>x.classList.remove('on'));
+    t.classList.add('on');
+    const p=document.getElementById('q6-'+t.dataset.q6);
+    if(p)p.classList.add('on');
+  });
 
-  const MAP = {
-    'Hammer':'錘子線',
-    'Hanging Man':'吊人線',
-    'Inverted Hammer':'倒錘子線',
-    'Shooting Star':'射擊之星',
-    'Doji':'十字線',
-    'Dragonfly Doji':'蜻蜓十字',
-    'Gravestone Doji':'墓碑十字',
-    'Spinning Top':'紡錘線',
-    'Marubozu':'光頭光腳',
-    'Engulfing Pattern':'吞噬形態',
-    'Harami Pattern':'孕線',
-    'Harami Cross Pattern':'十字孕線',
-    'Piercing Pattern':'刺透形態',
-    'Dark Cloud Cover':'烏雲蓋頂',
-    'Morning Star':'晨星',
-    'Morning Doji Star':'十字晨星',
-    'Evening Star':'暮星',
-    'Evening Doji Star':'十字暮星',
-    'Three White Soldiers':'三白兵',
-    'Three Black Crows':'三黑鴉',
-    'Matching Low':'相同低點',
-    'Stick Sandwich':'夾心線',
-    'Takuri':'探水竿',
-    'Long Legged Doji':'長腳十字',
-    'Rickshaw Man':'黃包車夫',
-    'Long Line Candle':'長蠟燭線',
-    'Short Line Candle':'短蠟燭線',
-    'Counterattack':'反擊線',
-    'Belt-hold':'捉腰帶線',
-    'Three Inside Up/Down':'三內升降',
-    'Three Outside Up/Down':'三外升降',
-    'Three-Line Strike':'三線打擊',
-    'Three Stars In The South':'南方三星',
-    'Advance Block':'推進受阻',
-    'Homing Pigeon':'家鴿',
-    'Ladder Bottom':'梯底',
-    'Mat Hold':'鋪墊形',
-    'On-Neck Pattern':'頸上線',
-    'In-Neck Pattern':'頸內線',
-    'Thrusting Pattern':'插入線',
-    'High-Wave Candle':'高浪線',
-    'Closing Marubozu':'收盤光頭光腳',
-    'Abandoned Baby':'棄嬰',
-    'Three White Soldiers':'三白兵',
-    'Three Black Crows':'三黑鴉'
-  };
+  function num(v){return Number(v||0);}
+  function fmt(v,d=2){return typeof v==='number'?v.toFixed(d):'—';}
+  function sv(id,txt,cls){
+    const el=document.getElementById(id);
+    if(!el)return;
+    el.textContent=txt;
+    if(cls){el.className='q6-v';if(cls!=='')el.classList.add(cls);}
+  }
+  function sh(id,h){const el=document.getElementById(id);if(el)el.innerHTML=h;}
 
-  const _oldRenderMain = window.renderMain;
-  if(typeof _oldRenderMain !== 'function') return;
+  function calcZZ(bars,dev){
+    dev=dev||5;
+    if(!bars||bars.length<3)return[];
+    let lp=num(bars[0].close),li=0,dir=0;const pv=[];
+    for(let i=1;i<bars.length;i++){
+      const h=num(bars[i].high),l=num(bars[i].low);
+      if(dir>=0){
+        if(h>lp*(1+dev/100)){pv.push({i:li,v:lp,hi:true});lp=h;li=i;dir=1;}
+        else if(l<lp*(1-dev/100)){pv.push({i:li,v:lp,hi:true});lp=l;li=i;dir=-1;}
+      }else{
+        if(l<lp*(1-dev/100)){pv.push({i:li,v:lp,hi:false});lp=l;li=i;dir=-1;}
+        else if(h>lp*(1+dev/100)){pv.push({i:li,v:lp,hi:false});lp=h;li=i;dir=1;}
+      }
+    }
+    pv.push({i:li,v:lp,hi:dir>=0});return pv;
+  }
+  function calcMA(bars,n){
+    const out=[];
+    for(let i=0;i<bars.length;i++){
+      if(i<n-1){out.push(null);continue;}
+      let s=0;for(let k=0;k<n;k++)s+=num(bars[i-k].close);
+      out.push(s/n);
+    }return out;
+  }
+  function calcCh(bars){
+    const n=bars.length;if(n<5)return null;
+    const c=bars.map(b=>num(b.close));
+    let sx=0,sy=0,sxy=0,sxx=0;
+    for(let i=0;i<n;i++){sx+=i;sy+=c[i];sxy+=i*c[i];sxx+=i*i;}
+    const slope=(n*sxy-sx*sy)/(n*sxx-sx*sx);
+    const intp=(sy-slope*sx)/n;
+    const tr=c.map((_,i)=>slope*i+intp);
+    const std=Math.sqrt(tr.reduce((a,v,i)=>a+(c[i]-v)**2,0)/n);
+    return{mid:tr[n-1],up:tr[n-1]+std,lo:tr[n-1]-std,slope,cur:c[n-1]};
+  }
+  function calcGaps(bars){
+    const g=[];
+    for(let i=1;i<bars.length;i++){
+      const p=bars[i-1],c=bars[i];
+      if(num(c.open)>num(p.high)&&num(c.close)>num(c.open))g.push({i,dir:'up',t:c.time});
+      else if(num(c.open)<num(p.low)&&num(c.close)<num(c.open))g.push({i,dir:'dn',t:c.time});
+    }return g;
+  }
+  function detectHS(bars,pv){
+    if(!pv||pv.length<5)return null;
+    for(let i=0;i<=pv.length-5;i++){
+      const a=pv[i],b=pv[i+1],c=pv[i+2],d=pv[i+3],e=pv[i+4];
+      if(!(a.hi&&c.hi&&e.hi&&!b.hi&&!d.hi))continue;
+      if(!(c.v>a.v&&c.v>e.v))continue;
+      if(Math.abs(a.v-e.v)/((a.v+e.v)/2)>0.12)continue;
+      const slope=(d.v-b.v)/(d.i-b.i);
+      const nk=d.v+slope*(bars.length-1-d.i);
+      const cur=num(bars[bars.length-1].close);
+      return{ls:a,ln:b,head:c,rn:d,rs:e,nk,cur,brk:cur<nk,diff:Math.abs(a.v-e.v)/((a.v+e.v)/2)};
+    }return null;
+  }
+  function tStr(t){
+    if(!t)return'—';
+    try{const d=typeof t==='number'?new Date(t*1000):new Date(t);return d.toLocaleDateString('zh-TW');}catch(e){return String(t);}
+  }
 
-  window.renderMain = function(ohlcv, a){
-    const r = _oldRenderMain.apply(this, arguments);
-    try{
-      if(!window.cSer || !Array.isArray(window.__lastPatternMergedMarks)) return r;
-      const remapped = window.__lastPatternMergedMarks.map(m => {
-        const txt = (m && typeof m.text === 'string') ? m.text : '';
-        if(txt === '吞噬形態' && m.color === '#7CFF6B') return {...m, text:'多頭吞噬'};
-        if(txt === '吞噬形態' && m.color === '#FF6B8A') return {...m, text:'空頭吞噬'};
-        return {...m, text: MAP[txt] || txt};
-      });
-      cSer.setMarkers(remapped);
-    }catch(e){}
-    return r;
+  window.renderQ6=function(bars){
+    if(!bars||bars.length<10)return;
+    const close=num(bars[bars.length-1].close);
+    const pv=calcZZ(bars);
+
+    // N字法
+    if(pv.length>=2){
+      const l2=pv.slice(-2);
+      const up=l2[1].hi;
+      const pct=((l2[1].v-l2[0].v)/l2[0].v*100).toFixed(2);
+      const his=pv.filter(p=>p.hi).map(p=>p.v);
+      const los=pv.filter(p=>!p.hi).map(p=>p.v);
+      sv('q6-zz-dir',up?'↑ 上升波段':'↓ 下降波段',up?'q6-bull':'q6-bear');
+      sv('q6-zz-pct',(pct>0?'+':'')+pct+'%','');
+      sv('q6-zz-hi',his.length?fmt(Math.max(...his.slice(-3))):'—','q6-bull');
+      sv('q6-zz-lo',los.length?fmt(Math.min(...los.slice(-3))):'—','q6-bear');
+      const nH=his.length>=2&&his[his.length-1]>his[his.length-2];
+      const nL=los.length>=2&&los[los.length-1]<los[los.length-2];
+      const sig=nH?'✅ 新高確認多頭':nL?'🚨 新低確認空頭':'🔄 區間整理中';
+      sv('q6-zz-sig',sig,nH?'q6-bull':nL?'q6-bear':'q6-warn');
+    }
+
+    // 跳空
+    const gaps=calcGaps(bars);const rg=gaps.slice(-15);
+    const upG=rg.filter(g=>g.dir==='up').length,dnG=rg.filter(g=>g.dir==='dn').length;
+    sv('q6-gap-count','近15根：↑'+upG+' ↓'+dnG,'');
+    if(rg.length){
+      const lg=rg[rg.length-1];
+      sv('q6-gap-dir',lg.dir==='up'?'↑ 跳空上漲':'↓ 跳空下跌',lg.dir==='up'?'q6-bull':'q6-bear');
+      sv('q6-gap-date',tStr(lg.t),'');
+    }
+
+    // 均線
+    const ma5a=calcMA(bars,5),ma20a=calcMA(bars,20),ma60a=calcMA(bars,60);
+    const m5=ma5a[bars.length-1],m20=ma20a[bars.length-1],m60=ma60a[bars.length-1];
+    sv('q6-ma5',m5?fmt(m5):'—','');sv('q6-ma20',m20?fmt(m20):'—','');sv('q6-ma60',m60?fmt(m60):'—','');
+    if(m5&&m20&&m60){
+      const up=m5>m20&&m20>m60,dn=m5<m20&&m20<m60;
+      sv('q6-ma-align',up?'多頭排列 ▲':dn?'空頭排列 ▼':'均線糾結 →',up?'q6-bull':dn?'q6-bear':'q6-warn');
+      const aUp=close>m5&&close>m20&&close>m60,aDn=close<m5&&close<m20&&close<m60;
+      sv('q6-ma-pos',aUp?'站上三均線':aDn?'跌破三均線':'均線糾纏中',aUp?'q6-bull':aDn?'q6-bear':'q6-warn');
+    }
+
+    // 軌道
+    const ch=calcCh(bars);
+    if(ch){
+      sv('q6-ch-up',fmt(ch.up),'q6-bear');sv('q6-ch-mid',fmt(ch.mid),'');sv('q6-ch-lo',fmt(ch.lo),'q6-bull');
+      const aUp=ch.cur>ch.up,aDn=ch.cur<ch.lo,upper=ch.cur>ch.mid;
+      sv('q6-ch-pos',aUp?'突破上軌 ⚠':aDn?'跌破下軌 ⚠':upper?'上半段':'下半段',aUp?'q6-bear':aDn?'q6-bull':upper?'q6-bull':'q6-warn');
+      sv('q6-ch-dir',ch.slope>0?'上升通道 ↑':'下降通道 ↓',ch.slope>0?'q6-bull':'q6-bear');
+    }
+
+    // 頭肩頂
+    const hs=detectHS(bars,pv);
+    if(hs){
+      const badge=hs.brk?'<span class="q6-badge bear">🚨 頸線突破</span>':'<span class="q6-badge warn">⚠ 警戒中</span>';
+      sh('q6-hs-inner',`<div style="font-size:.6rem;color:#ffd54f;font-weight:700;margin-bottom:5px">✅ 頭肩頂型態 ${badge}</div>
+        <div class="q6-row"><span class="q6-lbl">左肩</span><span class="q6-v q6-bull">${fmt(hs.ls.v)}</span></div>
+        <div class="q6-row"><span class="q6-lbl">頭部</span><span class="q6-v q6-bear">${fmt(hs.head.v)}</span></div>
+        <div class="q6-row"><span class="q6-lbl">右肩</span><span class="q6-v q6-bull">${fmt(hs.rs.v)}</span></div>
+        <div class="q6-row"><span class="q6-lbl">頸線</span><span class="q6-v q6-warn">${fmt(hs.nk)} ${hs.brk?'<small style="color:#ff5252">⬇ 已跌破</small>':''}</span></div>
+        <div class="q6-row"><span class="q6-lbl">肩差</span><span class="q6-v">${(hs.diff*100).toFixed(1)}%</span></div>`);
+    } else {
+      sh('q6-hs-inner','<div class="q6-row"><span class="q6-lbl" style="color:#3a6078">未偵測到完整頭肩頂</span></div>');
+    }
+
+    // AI建議
+    const bMA=m5&&m20&&m60&&m5>m20&&m20>m60,dMA=m5&&m20&&m60&&m5<m20&&m20<m60;
+    const aUp=m5&&m20&&m60&&close>m5&&close>m20&&close>m60;
+    let html='';
+    if(hs&&hs.brk){
+      html=`<b style="color:#ff5252">🚨 頭肩頂頸線突破，做空訊號確認</b><br>
+      <table style="width:100%;font-size:.57rem;margin-top:5px;border-collapse:collapse">
+      <tr style="color:#5a8aa8"><th style="text-align:left;padding:2px 3px">情境</th><th style="text-align:left;padding:2px 3px">買進</th><th style="text-align:left;padding:2px 3px">賣出/反手</th></tr>
+      <tr><td style="padding:2px 3px">持有多單</td><td style="color:#ffd54f;padding:2px 3px">不加碼</td><td style="color:#ff5252;padding:2px 3px">立即全出+反手</td></tr>
+      <tr><td style="padding:2px 3px">空手</td><td style="padding:2px 3px">等回均線低接</td><td style="color:#ff5252;padding:2px 3px">直接布空單</td></tr>
+      <tr><td style="padding:2px 3px">風控</td><td colspan="2" style="padding:2px 3px">單筆≤10%，停損右肩低點下2%</td></tr></table>`;
+    } else if(hs){
+      html=`<b style="color:#ffd54f">⚠ 右肩誘多區，資金出貨區警戒</b><br>
+      <div style="margin-top:5px">持有多單→優先減碼，勿追高<br>空手→等右肩長黑K再反手<br>風控→嚴格停損，不凹單</div>`;
+    } else if(bMA&&aUp){
+      html=`<b style="color:#00e676">✅ 多頭趨勢，均線看多</b><br>
+      <div style="margin-top:5px">買進：N字新高+跳空缺口確認<br>加碼：回測MA5不破再加<br>停利：到上軌附近分批出</div>`;
+    } else if(dMA){
+      html=`<b style="color:#ff5252">🚨 空頭排列，趨勢偏弱</b><br>
+      <div style="margin-top:5px">不追空，等反彈至均線壓力再判斷<br>下軌附近可試小多，嚴設停損</div>`;
+    } else {
+      html=`<b style="color:#9ec5d8">🔄 均線糾結，方向未明</b><br>
+      <div style="margin-top:5px">等均線明確排列後再進場，不預設方向</div>`;
+    }
+    sh('q6-ai-content',html);
   };
 })();
 </script>
-
 </body>
 </html>
 
