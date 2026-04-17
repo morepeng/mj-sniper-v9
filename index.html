@@ -1693,34 +1693,47 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 // Yahoo Finance API: query1/query2.finance.yahoo.com
 // ═══════════════════════════════════════════════════════════════════
 async function fetchYahooKline(tk, bars=200){
-  // 手機修正版：移除 mode:'cors' 和 headers，避免觸發 CORS preflight
+  // ── CORS 快速偵測：若上次已確認被擋，直接跳過 ──
+  if(G._yahooCorsBlocked) return null;
+
   const YAHOO_HOSTS = [
     'https://query1.finance.yahoo.com',
     'https://query2.finance.yahoo.com',
   ];
+  
   const range = bars <= 60 ? '3mo' : bars <= 130 ? '6mo' : '1y';
   const url_path = `/v8/finance/chart/${encodeURIComponent(tk)}?interval=1d&range=${range}&includeAdjustedClose=true`;
 
-  // ① Yahoo 直連（無 headers，無 mode:'cors'，手機 Safari/Chrome 可直通）
   for(const host of YAHOO_HOSTS){
     try{
       const ctrl = new AbortController();
-      const t = setTimeout(()=>ctrl.abort(), 8000); // 8秒（原本3秒太短）
-      const resp = await fetch(host + url_path, { signal: ctrl.signal });
+      const t = setTimeout(()=>ctrl.abort(), 3000);  // 3秒快速超時
+      const resp = await fetch(host + url_path, {
+        signal: ctrl.signal,
+        headers: {'Accept':'application/json'},
+        mode: 'cors',
+      });
       clearTimeout(t);
+      
       if(!resp.ok) continue;
       const json = await resp.json();
+      
       const result = json?.chart?.result?.[0];
       if(!result) continue;
-      const ts_arr = result.timestamp;
-      const q      = result.indicators?.quote?.[0];
-      const adj    = result.indicators?.adjclose?.[0]?.adjclose;
+      
+      const ts_arr   = result.timestamp;
+      const q        = result.indicators?.quote?.[0];
+      const adj      = result.indicators?.adjclose?.[0]?.adjclose;
+      
       if(!ts_arr || !q?.close) continue;
+      
+      // 解析 OHLCV（過濾 null/NaN 值）
       const ohlcv = [];
       for(let i=0; i<ts_arr.length; i++){
         const c = (adj?.[i] ?? q.close[i]);
         if(c==null || isNaN(c) || c<=0) continue;
-        const o2=q.open[i]??c, h2=q.high[i]??c, l2=q.low[i]??c;
+        // 過濾開高低收有異常的根
+        const o2 = q.open[i]??c, h2=q.high[i]??c, l2=q.low[i]??c;
         if(isNaN(o2)||isNaN(h2)||isNaN(l2)) continue;
         ohlcv.push({
           time:   ts_arr[i],
@@ -1731,99 +1744,32 @@ async function fetchYahooKline(tk, bars=200){
           volume: q.volume[i] ?? 0,
         });
       }
+      
       if(ohlcv.length < 10) continue;
+      
+      // 取最後 bars 根
       const sliced = ohlcv.slice(-bars);
       const lastClose = sliced[sliced.length-1].close;
-      const lastDate  = new Date(sliced[sliced.length-1].time*1000).toISOString().slice(0,10);
-      console.log(`[Yahoo直連] ✅ ${tk} ${sliced.length}根, 末根=${lastClose} (${lastDate})`);
+      const lastDate  = new Date(sliced[sliced.length-1].time*1000)
+                          .toISOString().slice(0,10);
+      
+      console.log(`[Yahoo直連] ${tk} 成功: ${sliced.length}根, 末根=${lastClose} (${lastDate})`);
       return { data: sliced, last_close: lastClose, last_date: lastDate,
                source: 'yahoo_direct', bars: sliced.length };
+               
     }catch(e){
       console.log(`[Yahoo直連] ${host} 失敗:`, e.message);
     }
   }
-
-  // ② Stooq CSV 備援（台股/美股，手機直連，完全無 CORS 問題）
-  try{
-    const ss = tk.replace('.TW','.tw').replace('.TWO','.tw').replace('.HK','.hk').toLowerCase();
-    const stooqUrl = `https://stooq.com/q/d/l/?s=${ss}&i=d`;
-    const ctrl2 = new AbortController();
-    const t2 = setTimeout(()=>ctrl2.abort(), 12000);
-    const sr = await fetch(stooqUrl, { signal: ctrl2.signal });
-    clearTimeout(t2);
-    if(sr.ok){
-      const lines = (await sr.text()).trim().split('\n').slice(1);
-      if(lines.length >= 10){
-        const ohlcv = [];
-        for(const ln of lines){
-          const p = ln.split(',');
-          if(p.length < 5) continue;
-          const ts = Math.floor(new Date(p[0]+'T08:00:00+08:00').getTime()/1000);
-          const c = parseFloat(p[4]);
-          if(!c || c<=0 || isNaN(c)) continue;
-          ohlcv.push({
-            time: ts, open: parseFloat(p[1])||c, high: parseFloat(p[2])||c,
-            low:  parseFloat(p[3])||c, close: c, volume: p[5]?parseFloat(p[5]):0
-          });
-        }
-        if(ohlcv.length >= 10){
-          const sliced = ohlcv.slice(-bars);
-          const lastClose = sliced[sliced.length-1].close;
-          const lastDate  = new Date(sliced[sliced.length-1].time*1000).toISOString().slice(0,10);
-          console.log(`[Stooq備援] ✅ ${tk} ${sliced.length}根, 末根=${lastClose} (${lastDate})`);
-          return { data: sliced, last_close: lastClose, last_date: lastDate,
-                   source: 'stooq', bars: sliced.length };
-        }
-      }
-    }
-  }catch(e){ console.log('[Stooq備援] 失敗:', e.message); }
-
-  // ③ CORS Proxy 備援（5個輪流）
-  const CORS_PROXIES = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${u}`,
-    u => `https://cors.eu.org/${u}`,
-  ];
-  const PNAMES = ['corsproxy.io','allorigins','codetabs','thingproxy','cors.eu.org'];
-  const yUrl = `https://query1.finance.yahoo.com${url_path}`;
-  for(let pi=0; pi<CORS_PROXIES.length; pi++){
-    try{
-      const ctrl3 = new AbortController();
-      const t3 = setTimeout(()=>ctrl3.abort(), 12000);
-      const r = await fetch(CORS_PROXIES[pi](yUrl), { signal: ctrl3.signal });
-      clearTimeout(t3);
-      if(!r.ok) continue;
-      const text = await r.text();
-      let json; try{ json=JSON.parse(text); }catch(e){ continue; }
-      if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
-      const result = json?.chart?.result?.[0];
-      if(!result) continue;
-      const ts_arr=result.timestamp, q=result.indicators?.quote?.[0];
-      const adj=result.indicators?.adjclose?.[0]?.adjclose;
-      if(!ts_arr||!q?.close) continue;
-      const ohlcv=[];
-      for(let i=0;i<ts_arr.length;i++){
-        const c=adj?.[i]??q.close[i];
-        if(!c||c<=0||isNaN(c)) continue;
-        ohlcv.push({time:ts_arr[i],open:q.open[i]??c,high:q.high[i]??c,
-                    low:q.low[i]??c,close:c,volume:q.volume[i]??0});
-      }
-      if(ohlcv.length<10) continue;
-      const sliced=ohlcv.slice(-bars);
-      const lastClose=sliced[sliced.length-1].close;
-      const lastDate=new Date(sliced[sliced.length-1].time*1000).toISOString().slice(0,10);
-      console.log(`[${PNAMES[pi]}代理] ✅ ${tk} ${sliced.length}根, 末根=${lastClose} (${lastDate})`);
-      return { data:sliced, last_close:lastClose, last_date:lastDate,
-               source:PNAMES[pi], bars:sliced.length };
-    }catch(e){ console.log(`[${PNAMES[pi]}] 失敗:`, e.message); }
-  }
-
-  console.log(`[fetchYahooKline] ❌ ${tk} 所有來源失敗`);
+  console.log(`[Yahoo直連] ${tk} 全部端點失敗（可能 CORS 或網路問題）`);
   return null;
 }
 
+// ═══════════════════════════════════════════════════════════════════
+// HARDCODED_DATA — 真實走勢 K線（2025/05~2026/02，末根=真實收盤）
+// 更新日期: 2026/02/27 | 共 25 支股票 | 格式: [ts,o,h,l,c,v]
+// 新增股票: 直接在 WAYPOINTS + HARDCODED_DATA 兩處加一筆即可
+// ═══════════════════════════════════════════════════════════════════
 const HARDCODED_DATA = {};
 // HARDCODED 已移除 — 所有數據從 Flask /api/kline 或 Yahoo Finance 直連取得
 
@@ -1929,6 +1875,7 @@ function genOHLCV(tk,bars){
   Object.assign(bm, {
     'AMGN':379, 'COST':900, 'NFLX':1030,
     'BABA':105, '0700.HK':400,
+    '2330.TW':2050, '2454.TW':1500, '0050.TW':195, // 2026/04 更新
   });
   // ── 優先使用使用者手動輸入的真實市價 ──
   const userPrice = G.realPrices[tk];
@@ -6080,6 +6027,8 @@ function confirmRealPrice(){
   if(!validatePmInp()) return;
 
   const tk = G.tk;
+  // ✅ 必須先設 userManualPrice=true，才不會在 runAnalysis 開頭被清掉
+  G.userManualPrice = true;
   // 儲存真實市價
   G.realPrices[tk] = val;
   localStorage.setItem('mj_realprices', JSON.stringify(G.realPrices));
@@ -6454,7 +6403,7 @@ function applySectorRotScore(rotData){
    - 格式輸出：[{time,open,high,low,close,volume}] 與 Flask 格式一致
    ══════════════════════════════════════════════════════════════════ */
 const _klineCache = {};  // {tk_tf: {ts, data}}
-const _KLINE_TTL  = 2 * 60 * 1000; // 2 分鐘快取（手機即時）
+const _KLINE_TTL  = 2 * 60 * 1000; // 2 分鐘快取
 
 async function fetchKlineDirect(tk, tf='1d', bars=200){
   const key = tk+'_'+tf;
@@ -6470,7 +6419,6 @@ async function fetchKlineDirect(tk, tf='1d', bars=200){
   const rangeMap = {'1d':'2y','1wk':'5y','1mo':'10y','60m':'60d','15m':'20d','5m':'5d'};
   const range    = rangeMap[interval]||'2y';
 
-  // ── 解析 Yahoo v8 JSON → OHLCV 陣列 ──
   function parseYahooV8(json){
     const res = json?.chart?.result?.[0];
     if(!res) return null;
@@ -6482,76 +6430,89 @@ async function fetchKlineDirect(tk, tf='1d', bars=200){
     for(let i=0;i<ts.length;i++){
       const c = adj[i]||q.close?.[i]||0;
       if(!c||c<=0) continue;
-      ohlcv.push({
-        time:   ts[i],
-        open:   q.open?.[i]  ||c,
-        high:   q.high?.[i]  ||c,
-        low:    q.low?.[i]   ||c,
-        close:  c,
-        volume: q.volume?.[i]||0,
-      });
+      ohlcv.push({time:ts[i], open:q.open?.[i]||c, high:q.high?.[i]||c,
+                  low:q.low?.[i]||c, close:c, volume:q.volume?.[i]||0});
     }
     return ohlcv.length >= 5 ? ohlcv : null;
   }
 
-  // ── Yahoo Finance 直連 URL 清單 ──
-  const YAHOO_BASE = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}`;
-  const YAHOO_BASE2= `https://query2.finance.yahoo.com/v8/finance/chart/${sym}`;
-  const YAHOO_PARAMS= `?range=${range}&interval=${interval}&includePrePost=false`;
+  const B1 = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}`;
+  const B2 = `https://query2.finance.yahoo.com/v8/finance/chart/${sym}`;
+  const YP = `?range=${range}&interval=${interval}&includePrePost=false`;
 
-  // ── CORS 代理清單（瀏覽器無法直連時使用）──
-  // 這 3 個是目前最穩定的免費公共 CORS 代理
-  const YAHOO_URL = YAHOO_BASE + YAHOO_PARAMS;
-  const CORS_PROXIES = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
-
-  // ── 第一關：Yahoo 直連（query1 + query2，不需代理）──
-  for(const base of [YAHOO_BASE, YAHOO_BASE2]){
+  // ── 第一關：Yahoo直連（無headers，手機Safari/Chrome可直通）──
+  for(const base of [B1, B2]){
     try{
-      const r = await fetch(base + YAHOO_PARAMS, {
-        signal: AbortSignal.timeout(8000)
-      });
+      const r = await fetch(base + YP, { signal: AbortSignal.timeout(8000) });
       if(!r.ok) continue;
-      const json = await r.json();
-      const ohlcv = parseYahooV8(json);
+      const ohlcv = parseYahooV8(await r.json());
       if(!ohlcv) continue;
       const result = ohlcv.slice(-bars);
       _klineCache[key] = {ts:now, data:result};
       console.log(`[KlineDirect] ✅ Yahoo直連 ${tk} ${result.length}根`);
       return result;
-    }catch(e){ console.warn('[KlineDirect] Yahoo直連失敗:', e.message); }
+    }catch(e){ console.warn('[KlineDirect] Yahoo直連:', e.message); }
   }
 
-  // ── 第二關：CORS 代理（query1 被擋時啟動）──
-  for(let pi=0; pi<CORS_PROXIES.length; pi++){
+  // ── 第二關：Stooq CSV（台股/美股，無CORS問題）──
+  if(interval==='1d'||interval==='1wk'){
     try{
-      const proxyUrl = CORS_PROXIES[pi](YAHOO_URL);
-      const proxyNames = ['corsproxy.io','allorigins.win','codetabs.com'];
-      const r = await fetch(proxyUrl, {
-        signal: AbortSignal.timeout(12000),
-        headers: {'Accept':'application/json', 'X-Requested-With':'XMLHttpRequest'}
-      });
-      if(!r.ok){ console.warn(`[KlineDirect] ${proxyNames[pi]} HTTP ${r.status}`); continue; }
+      const ss = tk.replace('.TW','.tw').replace('.TWO','.tw').replace('.HK','.hk').toLowerCase();
+      const sr = await fetch(`https://stooq.com/q/d/l/?s=${ss}&i=d`, {signal:AbortSignal.timeout(12000)});
+      if(sr.ok){
+        const lines = (await sr.text()).trim().split('\n').slice(1);
+        if(lines.length >= 10){
+          const ohlcv = [];
+          for(const ln of lines){
+            const p = ln.split(',');
+            if(p.length < 5) continue;
+            const ts = Math.floor(new Date(p[0]+'T08:00:00+08:00').getTime()/1000);
+            const c = parseFloat(p[4]);
+            if(!c||c<=0||isNaN(c)) continue;
+            ohlcv.push({time:ts, open:parseFloat(p[1])||c, high:parseFloat(p[2])||c,
+                        low:parseFloat(p[3])||c, close:c, volume:p[5]?parseFloat(p[5]):0});
+          }
+          if(ohlcv.length >= 10){
+            const result = ohlcv.slice(-bars);
+            _klineCache[key] = {ts:now, data:result};
+            console.log(`[KlineDirect] ✅ Stooq ${tk} ${result.length}根`);
+            return result;
+          }
+        }
+      }
+    }catch(e){ console.warn('[KlineDirect] Stooq:', e.message); }
+  }
+
+  // ── 第三關：CORS Proxy（5個輪流）──
+  const PROXIES = [
+    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+    u => `https://cors.eu.org/${u}`,
+  ];
+  const PNAMES = ['corsproxy.io','allorigins','codetabs','thingproxy','cors.eu.org'];
+  const YURL = B1 + YP;
+  for(let pi=0; pi<PROXIES.length; pi++){
+    try{
+      const r = await fetch(PROXIES[pi](YURL), { signal: AbortSignal.timeout(12000) });
+      if(!r.ok) continue;
       const text = await r.text();
-      // allorigins 可能回傳 {contents: "..."}
-      let json;
-      try{ json = JSON.parse(text); }catch(e){ continue; }
-      if(json?.contents) try{ json = JSON.parse(json.contents); }catch(e){}
+      let json; try{ json=JSON.parse(text); }catch(e){ continue; }
+      if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
       const ohlcv = parseYahooV8(json);
-      if(!ohlcv){ console.warn(`[KlineDirect] ${proxyNames[pi]} 數據解析失敗`); continue; }
+      if(!ohlcv) continue;
       const result = ohlcv.slice(-bars);
       _klineCache[key] = {ts:now, data:result};
-      console.log(`[KlineDirect] ✅ ${proxyNames[pi]} 代理 ${tk} ${result.length}根`);
+      console.log(`[KlineDirect] ✅ ${PNAMES[pi]} ${tk} ${result.length}根`);
       return result;
-    }catch(e){ console.warn(`[KlineDirect] 代理${pi+1}失敗:`, e.message); }
+    }catch(e){ console.warn(`[KlineDirect] ${PNAMES[pi]}:`, e.message); }
   }
 
   console.warn('[KlineDirect] ❌ 所有來源失敗:', tk);
   return null;
 }
+
 async function fetchYahooPrice(tk){
   const symbol = encodeURIComponent(tk);
 
