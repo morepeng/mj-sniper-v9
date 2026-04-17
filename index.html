@@ -5657,7 +5657,7 @@ async function runAnalysis(tk){
   updSigQuality(a, chipAn, filtAn);
 
   // ── 異步取得真實 TWSE 籌碼（不阻塞主流程）──
-  if(G.apiOnline===true && (tk.endsWith('.TW')||tk.endsWith('.TWO'))){
+  if(tk.endsWith('.TW')||tk.endsWith('.TWO')){
     fetchRealChips(tk).then(apiResp=>{
       if(!apiResp) return;
       const rc  = apiResp.chips;          // 最新日籌碼
@@ -5706,7 +5706,9 @@ async function runAnalysis(tk){
                           sum.consec_buy_days>=1 ? `外資買超${sum.consec_buy_days}日` :
                           `外資賣超`;
         const fmtK = v => v>=0?`+${(v/1000).toFixed(0)}張`:`${(v/1000).toFixed(0)}張`;
-        toast(`✅ ${tk} 真實TWSE籌碼 | 三大法人:${fmtK(total)} | ${consecTxt}`,
+        const mgTxt = (mg&&mg.margin_change_pct) ?
+          ` | 融資${mg.margin_change_pct>0?'+':''}${mg.margin_change_pct.toFixed(1)}%` : '';
+        toast(`✅ ${tk} 真實TWSE籌碼 | 三大法人:${fmtK(total)} | ${consecTxt}${mgTxt}`,
               total>0?'buy':total<0?'sell':'info', 6000);
       }
     }).catch(e=>{ console.warn('fetchRealChips failed:',e); });
@@ -6754,21 +6756,128 @@ async function refreshTape(){
 ════════════════════════════════════════════ */
 /* fetchRealChips：取得完整 TWSE 籌碼 API 回應 */
 async function fetchRealChips(tk){
-  if(G.apiOnline !== true) return null;
-  try{
-    const ctrl = new AbortController();
-    setTimeout(()=>ctrl.abort(), 8000);   // 籌碼API需要多抓幾日，給8秒
-    const r = await fetch(
-      `${G.apiBase}/api/chips?tk=${encodeURIComponent(tk)}&days=5`,
-      {signal: ctrl.signal}
-    );
-    if(!r.ok) return null;
-    const d = await r.json();
-    if(d.available && d.chips) return d;    // 回傳完整 d（含 summary/history/margin）
-    console.warn('fetchRealChips: available=false', d.note||'');
+  // ✅ 直接向 TWSE 公開 API 取三大法人 + 融資融券（不需後端）
+  const isTW = tk.endsWith('.TW') || tk.endsWith('.TWO');
+  if(!isTW) return null;
+  const code = tk.replace('.TW','').replace('.TWO','');
+  const ts   = Date.now();
+  const hdrs = {'User-Agent':'Mozilla/5.0','Referer':'https://www.twse.com.tw/'};
+
+  // ── 快取：當日已取過就直接回傳 ──
+  const cKey = `twse_chip_${code}_${new Date().toISOString().slice(0,10)}`;
+  const cached = sessionStorage.getItem(cKey);
+  if(cached){ try{ return JSON.parse(cached); }catch(e){} }
+
+  // ── 共用 CORS proxy 輔助 ──
+  const PROXIES=[
+    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+  ];
+  async function safeFetch(url, timeout=10000){
+    // 先直連
+    try{
+      const r = await fetch(url,{signal:AbortSignal.timeout(timeout)});
+      if(r.ok){ const t=await r.text(); if(t&&t.length>10) return t; }
+    }catch(e){}
+    // Proxy 輪流
+    for(const p of PROXIES){
+      try{
+        const r = await fetch(p(url),{signal:AbortSignal.timeout(timeout)});
+        if(r.ok){ const t=await r.text(); if(t&&t.length>10){
+          // allorigins 包了一層 contents
+          try{ const j=JSON.parse(t); if(j.contents) return j.contents; }catch(e){}
+          return t;
+        }}
+      }catch(e){}
+    }
     return null;
+  }
+
+  try{
+    // ── A. 三大法人個股買賣超（TWSE TWT38U）──
+    const instUrl = `https://www.twse.com.tw/rwd/zh/fund/TWT38U?stockNo=${code}&response=json&_=${ts}`;
+    const instTxt = await safeFetch(instUrl);
+    if(!instTxt) return null;
+    let instJson; try{ instJson=JSON.parse(instTxt); }catch(e){ return null; }
+    const rows = instJson?.data || [];
+    if(rows.length < 1) return null;
+
+    const si = s => { try{ return parseInt(String(s).replace(/,/g,'').replace(/\+/g,'')||'0'); }catch(e){return 0;} };
+    // 欄位：[日期, 外資買, 外資賣, 外資淨, 投信買, 投信賣, 投信淨, 自營買, 自營賣, 自營淨, 合計]
+    const recent = rows.slice(-20);
+    const foreign_net = recent.map(r=>si(r[3]));
+    const trust_net   = recent.map(r=>si(r[6]));
+    const dealer_net  = recent.map(r=>si(r[9]));
+    const three_total = recent.map(r=>si(r[10]));
+    const dates       = recent.map(r=>r[0]);
+
+    // 最新一日
+    const last = recent[recent.length-1];
+    const chips = {
+      foreign_total: si(last[3]),
+      invest_net:    si(last[6]),
+      dealer_net:    si(last[9]),
+      total_inst:    si(last[10]),
+    };
+
+    // 連續買超/賣超天數
+    let consec_buy=0, consec_sell=0;
+    for(let i=foreign_net.length-1;i>=0;i--){
+      if(foreign_net[i]>0){ if(consec_sell>0) break; consec_buy++; }
+      else if(foreign_net[i]<0){ if(consec_buy>0) break; consec_sell++; }
+      else break;
+    }
+    // 近5日外資累積
+    const foreign_5d_net = foreign_net.slice(-5).reduce((a,b)=>a+b,0);
+
+    const summary = {
+      consec_buy_days:  consec_buy,
+      consec_sell_days: consec_sell,
+      foreign_5d_net,
+      strength: consec_buy>=5?'強力買超':consec_buy>=3?'持續買超':
+                consec_buy>=1?'買超':consec_sell>=3?'持續賣超':'賣超',
+    };
+
+    // ── B. 融資融券（TWSE MI_MARGN）──
+    let margin = { margin_balance:0, margin_change_pct:0, short_balance:0 };
+    try{
+      const mUrl = `https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN?stockNo=${code}&response=json&_=${ts+1}`;
+      const mTxt = await safeFetch(mUrl, 8000);
+      if(mTxt){
+        let mJson; try{ mJson=JSON.parse(mTxt); }catch(e){}
+        const mRows = mJson?.data||[];
+        if(mRows.length>=2){
+          const cur=mRows[mRows.length-1], prv=mRows[mRows.length-2];
+          // 欄位：[日期,融資買,融資賣,融資償還,融資餘額,融資限額,融券賣,融券買,融券償還,融券餘額,...]
+          const mb_now  = si(cur[4]), mb_prev = si(prv[4]);
+          const sb_now  = si(cur[9]||cur[7]||'0');
+          margin = {
+            margin_balance:    mb_now,
+            margin_change_pct: mb_prev>0 ? parseFloat(((mb_now-mb_prev)/mb_prev*100).toFixed(2)) : 0,
+            short_balance:     sb_now,
+          };
+        }
+      }
+    }catch(e){ console.warn('[fetchRealChips] margin:', e.message); }
+
+    const result = {
+      available: true,
+      chips, summary, margin,
+      history: recent.map((r,i)=>({
+        date: dates[i],
+        foreign_net: foreign_net[i],
+        trust_net:   trust_net[i],
+        dealer_net:  dealer_net[i],
+        three_total: three_total[i],
+      })),
+    };
+    sessionStorage.setItem(cKey, JSON.stringify(result));
+    console.log(`[fetchRealChips] ✅ TWSE直連 ${tk} | 外資:${chips.foreign_total} | 融資餘額:${margin.margin_balance}`);
+    return result;
+
   }catch(e){
-    console.warn('fetchRealChips error:', e.message);
+    console.warn('[fetchRealChips] 失敗:', e.message);
     return null;
   }
 }
@@ -7180,14 +7289,31 @@ function updChipUI(ch){
       {k:'🏦 外資合計淨買',   v:`${fmtK(fNet)}（${fNet>=0?'買超':'賣超'}）`, bar:(fNet+5000000)/10000000*100, c:fNet>=0?'bull':'bear'},
       {k:'💼 投信淨買超',     v:`${fmtK(iNet)}（${iNet>=0?'買超':'賣超'}）`, bar:(iNet+1000000)/2000000*100,  c:iNet>=0?'bull':'bear'},
       {k:'🏢 自營商淨買',     v:`${fmtK(dNet)}`,                              bar:(dNet+1000000)/2000000*100,  c:dNet>=0?'bull':'bear'},
-      {k:`⚡ 連續${consecDays>=0?'買':'賣'}超天數`, v:`${Math.abs(consecDays)}天`,
+      {k:`⚡ 連續${consecDays>=0?'買':'賣'}超天數`, v:`${Math.abs(consecDays)}天 ${consecDays>=3?'🔥':consecDays<=-3?'🚨':''}`,
        bar:Math.min(100,Math.abs(consecDays)/5*100), c:consecDays>=3?'bull':consecDays<=-2?'bear':'amber'},
+      {k:'📈 近5日外資累積', v:`${(sum.foreign_5d_net||0)>0?'+':''}${((sum.foreign_5d_net||0)/1000).toFixed(0)}張`,
+       bar:Math.min(100,Math.max(0,50+(sum.foreign_5d_net||0)/100000*50)),
+       c:(sum.foreign_5d_net||0)>=0?'bull':'bear'},
     ];
-    if(mg){
-      realRows.push({k:'💳 融資餘額',    v:`${(mg.margin_balance/1000).toFixed(0)}千張`,
-                    bar:Math.min(100,mg.margin_balance/5000000*100), c:'amber'});
-      realRows.push({k:'📉 融券餘額',    v:`${(mg.short_balance/1000).toFixed(1)}千張`,
-                    bar:Math.min(100,mg.short_balance/500000*100),   c:'cyan'});
+    if(mg && mg.margin_balance>0){
+      const mbChg = mg.margin_change_pct||0;
+      const mbChgTxt = mbChg>0?`+${mbChg.toFixed(1)}%`:mbChg<0?`${mbChg.toFixed(1)}%`:'持平';
+      const mbColor  = mbChg< -2?'bull': mbChg>5?'bear':'amber'; // 融資減少=多頭健康
+      realRows.push({k:'💳 融資餘額',
+        v:`${(mg.margin_balance/1000).toFixed(0)}千張（${mbChgTxt}）`,
+        bar:Math.min(100,mg.margin_balance/5000000*100), c:mbColor});
+      if(mg.short_balance>0){
+        const sratio = mg.margin_balance>0
+          ? (mg.short_balance/mg.margin_balance*100).toFixed(1)+'%' : '--';
+        realRows.push({k:'📉 融券餘額',
+          v:`${(mg.short_balance/1000).toFixed(1)}千張（券資比${sratio}）`,
+          bar:Math.min(100,mg.short_balance/500000*100), c:'cyan'});
+      }
+      // 核心組合信號
+      if(mbChg < -2 && (sum.consec_buy_days||0)>=3)
+        realRows.push({k:'🌟 核心信號', v:'外資連買≥3日 且 融資減少（籌碼最乾淨）', bar:100, c:'bull'});
+      else if(mbChg > 5 && (sum.consec_sell_days||0)>=3)
+        realRows.push({k:'🚨 警報信號', v:'外資連賣≥3日 且 融資增加（主力出貨）', bar:100, c:'bear'});
     }
     // 5日外資走勢（用 history）
     if(ch.realHistory && ch.realHistory.length>=2){
@@ -7214,15 +7340,6 @@ function updChipUI(ch){
         <span class="cr-v ${r.c||''}">${r.v}</span>
       </div>`).join('');
   }
-  $('chipSub').textContent=
-    `外資:${ch.foreignScore>0?'+':''}${ch.foreignScore} | 融資:${ch.marginScore>0?'+':''}${ch.marginScore} | 成本:${ch.vwapDiff>=0?'+':''}${ch.vwapDiff.toFixed(1)}%`;
-
-  $('chipRows').innerHTML = ch.rows.map(r=>`
-    <div class="cr">
-      <span class="cr-k">${r.k}</span>
-      <div class="cr-bar-wrap"><div class="cr-bar" style="width:${r.bar}%;background:${r.c==='bull'?'#00e676':r.c==='bear'?'#ff1744':'#ffab00'}"></div></div>
-      <span class="cr-v ${r.c||''}">${r.v}</span>
-    </div>`).join('');
 }
 
 // ══════════════════════════════════════════════════════════════════
