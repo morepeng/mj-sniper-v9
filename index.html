@@ -6400,7 +6400,7 @@ function applySectorRotScore(rotData){
    - 格式輸出：[{time,open,high,low,close,volume}] 與 Flask 格式一致
    ══════════════════════════════════════════════════════════════════ */
 const _klineCache = {};  // {tk_tf: {ts, data}}
-const _KLINE_TTL  = 10 * 60 * 1000; // 10 分鐘快取
+const _KLINE_TTL  = 2 * 60 * 1000; // 2 分鐘快取（手機即時）
 
 async function fetchKlineDirect(tk, tf='1d', bars=200){
   const key = tk+'_'+tf;
@@ -6452,6 +6452,8 @@ async function fetchKlineDirect(tk, tf='1d', bars=200){
     u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
     u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
     u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u => `https://thingproxy.freeboard.io/fetch/${u}`,
+    u => `https://cors.eu.org/${u}`,
   ];
 
   // ── 第一關：Yahoo 直連（query1 + query2，不需代理）──
@@ -6496,6 +6498,35 @@ async function fetchKlineDirect(tk, tf='1d', bars=200){
     }catch(e){ console.warn(`[KlineDirect] 代理${pi+1}失敗:`, e.message); }
   }
 
+  // ── 第三關：Stooq CSV 備援（台股/美股，手機直連無 CORS）──
+  try{
+    const stooqSym = tk.replace('.TW','.tw').replace('.HK','.hk').toLowerCase();
+    const stooqUrl = `https://stooq.com/q/d/l/?s=${stooqSym}&i=d`;
+    const sr = await fetch(stooqUrl, {signal: AbortSignal.timeout(12000)});
+    if(sr.ok){
+      const csv = await sr.text();
+      const lines = csv.trim().split('\n').slice(1);
+      if(lines.length >= 10){
+        const ohlcv = [];
+        for(const ln of lines){
+          const p = ln.split(',');
+          if(p.length < 5) continue;
+          const ts = Math.floor(new Date(p[0]+'T08:00:00+08:00').getTime()/1000);
+          const o=parseFloat(p[1]),h=parseFloat(p[2]),l=parseFloat(p[3]),c=parseFloat(p[4]);
+          const v=p[5]?parseFloat(p[5]):0;
+          if(!c||c<=0||isNaN(c)) continue;
+          ohlcv.push({time:ts,open:o||c,high:h||c,low:l||c,close:c,volume:v});
+        }
+        if(ohlcv.length >= 10){
+          const result = ohlcv.slice(-bars);
+          _klineCache[key] = {ts:now, data:result};
+          console.log(`[KlineDirect] ✅ Stooq備援 ${tk} ${result.length}根`);
+          return result;
+        }
+      }
+    }
+  }catch(e){ console.warn('[KlineDirect] Stooq失敗:', e.message); }
+
   console.warn('[KlineDirect] ❌ 所有來源失敗:', tk);
   return null;
 }
@@ -6531,6 +6562,8 @@ async function fetchYahooPrice(tk){
     `https://corsproxy.io/?${encodeURIComponent(_yBase+_yParams)}`,
     `https://api.allorigins.win/raw?url=${encodeURIComponent(_yBase+_yParams)}`,
     `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(_yBase+_yParams)}`,
+    `https://thingproxy.freeboard.io/fetch/${_yBase+_yParams}`,
+    `https://cors.eu.org/${_yBase+_yParams}`,
   ];
   const _proxyNames = ['corsproxy.io','allorigins','codetabs'];
   for(let pi=0;pi<_corsProxies.length;pi++){
