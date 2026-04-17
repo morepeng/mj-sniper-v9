@@ -2,6 +2,9 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -38,6 +41,7 @@
 html,body{height:100%;overflow:hidden}
 body{
   background:var(--bg);color:var(--t1);font-family:var(--fb);font-size:14px;line-height:1.45;
+  opacity:0;transition:opacity .3s ease;
   background-color:#050c14;
   background-image:radial-gradient(ellipse 120% 60% at 50% -5%,rgba(0,100,180,.07) 0%,transparent 50%),
     repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 3px);
@@ -942,6 +946,20 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 .q6-ai b{color:#00d4ff}
 .q6-mindset{margin-top:6px;padding:6px 8px;border-radius:4px;font-size:.59rem;line-height:1.6;border:1px solid #152d4a;background:#050c14;color:#ffd54f}
 </style>
+<script>
+// 最早期 SW 靜默清除（在任何 DOM 渲染前執行，徹底防閃屏）
+(function(){
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.getRegistrations().then(function(regs){
+      regs.forEach(function(reg){ reg.unregister(); });
+    }).catch(function(){});
+    // 確保後續 controller 更新不觸發 reload
+    navigator.serviceWorker.addEventListener('controllerchange', function(e){
+      e.stopImmediatePropagation();
+    });
+  }
+})();
+</script>
 </head>
 <body>
 <div class="app">
@@ -5700,7 +5718,7 @@ async function runAnalysis(tk){
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
   if(typeof window.renderQ6==="function") window.renderQ6(ohlcv);
 
-  ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
+  ld.style.opacity='0';document.body.style.opacity='1';setTimeout(()=>{ld.classList.add('hidden');
   // 手機：分析完成自動跳到 AI決策面板
   if(window.innerWidth<=768) setTimeout(()=>switchMobTab('left'),200);ld.style.opacity='';},400);
 
