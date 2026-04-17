@@ -1875,7 +1875,7 @@ function genOHLCV(tk,bars){
   Object.assign(bm, {
     'AMGN':379, 'COST':900, 'NFLX':1030,
     'BABA':105, '0700.HK':400,
-    '2330.TW':2050, '2454.TW':1500, '0050.TW':195, // 2026/04 更新
+    '2330.TW':2050, '0050.TW':195, '2454.TW':1500,
   });
   // ── 優先使用使用者手動輸入的真實市價 ──
   const userPrice = G.realPrices[tk];
@@ -6027,7 +6027,7 @@ function confirmRealPrice(){
   if(!validatePmInp()) return;
 
   const tk = G.tk;
-  // ✅ 必須先設 userManualPrice=true，才不會在 runAnalysis 開頭被清掉
+  // ✅ 必須先設 true，防止 runAnalysis 開頭把 realPrices 清掉
   G.userManualPrice = true;
   // 儲存真實市價
   G.realPrices[tk] = val;
@@ -6412,104 +6412,99 @@ async function fetchKlineDirect(tk, tf='1d', bars=200){
     console.log('[KlineDirect] cache hit:', key);
     return _klineCache[key].data;
   }
-
   const sym      = encodeURIComponent(tk);
   const tfMap    = {'1d':'1d','1wk':'1wk','1mo':'1mo','60':'60m','1h':'60m','15':'15m','5':'5m'};
   const interval = tfMap[tf]||'1d';
   const rangeMap = {'1d':'2y','1wk':'5y','1mo':'10y','60m':'60d','15m':'20d','5m':'5d'};
   const range    = rangeMap[interval]||'2y';
-
   function parseYahooV8(json){
     const res = json?.chart?.result?.[0];
     if(!res) return null;
-    const ts  = res.timestamp||[];
-    const q   = res.indicators?.quote?.[0]||{};
-    const adj = res.indicators?.adjclose?.[0]?.adjclose||[];
-    if(ts.length < 5) return null;
-    const ohlcv = [];
+    const ts=res.timestamp||[], q=res.indicators?.quote?.[0]||{};
+    const adj=res.indicators?.adjclose?.[0]?.adjclose||[];
+    if(ts.length<5) return null;
+    const ohlcv=[];
     for(let i=0;i<ts.length;i++){
-      const c = adj[i]||q.close?.[i]||0;
+      const c=adj[i]||q.close?.[i]||0;
       if(!c||c<=0) continue;
-      ohlcv.push({time:ts[i], open:q.open?.[i]||c, high:q.high?.[i]||c,
-                  low:q.low?.[i]||c, close:c, volume:q.volume?.[i]||0});
+      ohlcv.push({time:ts[i],open:q.open?.[i]||c,high:q.high?.[i]||c,
+                  low:q.low?.[i]||c,close:c,volume:q.volume?.[i]||0});
     }
-    return ohlcv.length >= 5 ? ohlcv : null;
+    return ohlcv.length>=5?ohlcv:null;
   }
+  const B1=`https://query1.finance.yahoo.com/v8/finance/chart/${sym}`;
+  const B2=`https://query2.finance.yahoo.com/v8/finance/chart/${sym}`;
+  const YP=`?range=${range}&interval=${interval}&includePrePost=false`;
 
-  const B1 = `https://query1.finance.yahoo.com/v8/finance/chart/${sym}`;
-  const B2 = `https://query2.finance.yahoo.com/v8/finance/chart/${sym}`;
-  const YP = `?range=${range}&interval=${interval}&includePrePost=false`;
-
-  // ── 第一關：Yahoo直連（無headers，手機Safari/Chrome可直通）──
-  for(const base of [B1, B2]){
+  // 第一關：Yahoo直連（不加任何headers，手機Safari/Chrome可直通CORS）
+  for(const base of [B1,B2]){
     try{
-      const r = await fetch(base + YP, { signal: AbortSignal.timeout(8000) });
+      const r=await fetch(base+YP,{signal:AbortSignal.timeout(8000)});
       if(!r.ok) continue;
-      const ohlcv = parseYahooV8(await r.json());
+      const ohlcv=parseYahooV8(await r.json());
       if(!ohlcv) continue;
-      const result = ohlcv.slice(-bars);
-      _klineCache[key] = {ts:now, data:result};
+      const result=ohlcv.slice(-bars);
+      _klineCache[key]={ts:now,data:result};
       console.log(`[KlineDirect] ✅ Yahoo直連 ${tk} ${result.length}根`);
       return result;
-    }catch(e){ console.warn('[KlineDirect] Yahoo直連:', e.message); }
+    }catch(e){console.warn('[KlineDirect] Yahoo直連:',e.message);}
   }
 
-  // ── 第二關：Stooq CSV（台股/美股，無CORS問題）──
+  // 第二關：Stooq CSV（台股/美股直連，完全無CORS問題）
   if(interval==='1d'||interval==='1wk'){
     try{
-      const ss = tk.replace('.TW','.tw').replace('.TWO','.tw').replace('.HK','.hk').toLowerCase();
-      const sr = await fetch(`https://stooq.com/q/d/l/?s=${ss}&i=d`, {signal:AbortSignal.timeout(12000)});
+      const ss=tk.replace('.TW','.tw').replace('.TWO','.tw').replace('.HK','.hk').toLowerCase();
+      const sr=await fetch(`https://stooq.com/q/d/l/?s=${ss}&i=d`,{signal:AbortSignal.timeout(12000)});
       if(sr.ok){
-        const lines = (await sr.text()).trim().split('\n').slice(1);
-        if(lines.length >= 10){
-          const ohlcv = [];
+        const lines=(await sr.text()).trim().split('\n').slice(1);
+        if(lines.length>=10){
+          const ohlcv=[];
           for(const ln of lines){
-            const p = ln.split(',');
-            if(p.length < 5) continue;
-            const ts = Math.floor(new Date(p[0]+'T08:00:00+08:00').getTime()/1000);
-            const c = parseFloat(p[4]);
+            const p=ln.split(',');
+            if(p.length<5) continue;
+            const ts=Math.floor(new Date(p[0]+'T08:00:00+08:00').getTime()/1000);
+            const c=parseFloat(p[4]);
             if(!c||c<=0||isNaN(c)) continue;
-            ohlcv.push({time:ts, open:parseFloat(p[1])||c, high:parseFloat(p[2])||c,
-                        low:parseFloat(p[3])||c, close:c, volume:p[5]?parseFloat(p[5]):0});
+            ohlcv.push({time:ts,open:parseFloat(p[1])||c,high:parseFloat(p[2])||c,
+                        low:parseFloat(p[3])||c,close:c,volume:p[5]?parseFloat(p[5]):0});
           }
-          if(ohlcv.length >= 10){
-            const result = ohlcv.slice(-bars);
-            _klineCache[key] = {ts:now, data:result};
+          if(ohlcv.length>=10){
+            const result=ohlcv.slice(-bars);
+            _klineCache[key]={ts:now,data:result};
             console.log(`[KlineDirect] ✅ Stooq ${tk} ${result.length}根`);
             return result;
           }
         }
       }
-    }catch(e){ console.warn('[KlineDirect] Stooq:', e.message); }
+    }catch(e){console.warn('[KlineDirect] Stooq:',e.message);}
   }
 
-  // ── 第三關：CORS Proxy（5個輪流）──
-  const PROXIES = [
-    u => `https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u => `https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u => `https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-    u => `https://thingproxy.freeboard.io/fetch/${u}`,
-    u => `https://cors.eu.org/${u}`,
+  // 第三關：CORS Proxy（5個輪流）
+  const PROXIES=[
+    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
+    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
+    u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
+    u=>`https://thingproxy.freeboard.io/fetch/${u}`,
+    u=>`https://cors.eu.org/${u}`,
   ];
-  const PNAMES = ['corsproxy.io','allorigins','codetabs','thingproxy','cors.eu.org'];
-  const YURL = B1 + YP;
-  for(let pi=0; pi<PROXIES.length; pi++){
+  const PNAMES=['corsproxy.io','allorigins','codetabs','thingproxy','cors.eu.org'];
+  const YURL=B1+YP;
+  for(let pi=0;pi<PROXIES.length;pi++){
     try{
-      const r = await fetch(PROXIES[pi](YURL), { signal: AbortSignal.timeout(12000) });
+      const r=await fetch(PROXIES[pi](YURL),{signal:AbortSignal.timeout(12000)});
       if(!r.ok) continue;
-      const text = await r.text();
-      let json; try{ json=JSON.parse(text); }catch(e){ continue; }
-      if(json?.contents) try{ json=JSON.parse(json.contents); }catch(e){}
-      const ohlcv = parseYahooV8(json);
+      const text=await r.text();
+      let json;try{json=JSON.parse(text);}catch(e){continue;}
+      if(json?.contents)try{json=JSON.parse(json.contents);}catch(e){}
+      const ohlcv=parseYahooV8(json);
       if(!ohlcv) continue;
-      const result = ohlcv.slice(-bars);
-      _klineCache[key] = {ts:now, data:result};
+      const result=ohlcv.slice(-bars);
+      _klineCache[key]={ts:now,data:result};
       console.log(`[KlineDirect] ✅ ${PNAMES[pi]} ${tk} ${result.length}根`);
       return result;
-    }catch(e){ console.warn(`[KlineDirect] ${PNAMES[pi]}:`, e.message); }
+    }catch(e){console.warn(`[KlineDirect] ${PNAMES[pi]}:`,e.message);}
   }
-
-  console.warn('[KlineDirect] ❌ 所有來源失敗:', tk);
+  console.warn('[KlineDirect] ❌ 所有來源失敗:',tk);
   return null;
 }
 
@@ -7858,9 +7853,16 @@ window.runMorningConfirmationScan = runMorningConfirmationScan;
 })();
 
 window.addEventListener('load', ()=>{
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg=>{ console.log('[SW] 已登記:', reg.scope); })
-      .catch(e=>  { console.warn('[SW] 登記失敗:', e); });
+    // ✅ 強制清除所有 Service Worker 快取，確保每次載入最新版本
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(regs => {
+        regs.forEach(reg => {
+          reg.unregister();
+          console.log('[SW] 已清除快取:', reg.scope);
+        });
+        if(regs.length) console.log('[SW] 所有舊快取已清除，下次重載將載入最新版');
+      });
+    }
     // 手機佈局初始化
     setTimeout(initMobileLayout, 100);
   });
