@@ -2,9 +2,6 @@
 <html lang="zh-TW">
 <head>
 <meta charset="UTF-8">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-capable" content="yes">
@@ -41,7 +38,6 @@
 html,body{height:100%;overflow:hidden}
 body{
   background:var(--bg);color:var(--t1);font-family:var(--fb);font-size:14px;line-height:1.45;
-  opacity:0;transition:opacity .3s ease;
   background-color:#050c14;
   background-image:radial-gradient(ellipse 120% 60% at 50% -5%,rgba(0,100,180,.07) 0%,transparent 50%),
     repeating-linear-gradient(0deg,transparent,transparent 2px,rgba(0,0,0,.1) 2px,rgba(0,0,0,.1) 3px);
@@ -115,12 +111,6 @@ body::after{content:'';position:fixed;inset:0;pointer-events:none;z-index:9999;
 .left{background:#070e19;border-right:1px solid #0e1f33;overflow-y:auto;display:flex;flex-direction:column}
 .right{background:#070e19;border-left:1px solid #0e1f33;overflow-y:auto;display:flex;flex-direction:column}
 .sec{border-bottom:1px solid #1a3550;padding:10px 11px;flex-shrink:0}
-
-/* ── ICT/SMC 面板 ── */
-#smcPanel .sec-title{letter-spacing:.03em}
-#smcCircle{transition:border-color .4s ease, color .4s ease}
-#smcRows>div:last-child{border-bottom:none!important}
-
 .sec-title{font-family:var(--ft);font-size:.73rem;font-weight:700;color:#00d4ff;
   letter-spacing:.1em;text-transform:uppercase;margin-bottom:8px;display:flex;align-items:center;gap:5px}
 .sec-title::before{content:'';width:2px;height:10px;background:#00d4ff;border-radius:1px}
@@ -952,20 +942,6 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 .q6-ai b{color:#00d4ff}
 .q6-mindset{margin-top:6px;padding:6px 8px;border-radius:4px;font-size:.59rem;line-height:1.6;border:1px solid #152d4a;background:#050c14;color:#ffd54f}
 </style>
-<script>
-// 最早期 SW 靜默清除（在任何 DOM 渲染前執行，徹底防閃屏）
-(function(){
-  if('serviceWorker' in navigator){
-    navigator.serviceWorker.getRegistrations().then(function(regs){
-      regs.forEach(function(reg){ reg.unregister(); });
-    }).catch(function(){});
-    // 確保後續 controller 更新不觸發 reload
-    navigator.serviceWorker.addEventListener('controllerchange', function(e){
-      e.stopImmediatePropagation();
-    });
-  }
-})();
-</script>
 </head>
 <body>
 <div class="app">
@@ -1333,24 +1309,6 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
 <!-- ══ RIGHT ══ -->
 <aside class="right">
 
-  <!-- ══ ICT/SMC 聰明錢面板 ══ -->
-  <div class="sec" id="smcPanel">
-    <div class="sec-title" style="display:flex;align-items:center;gap:6px">
-      🧠 ICT/SMC 聰明錢
-      <span style="font-size:.58rem;color:#00d4ff;background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.2);padding:1px 6px;border-radius:10px">Smart Money</span>
-    </div>
-    <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px;padding:6px 0;border-bottom:1px solid rgba(14,31,51,.8)">
-      <div id="smcCircle" style="width:40px;height:40px;border-radius:50%;background:#0a1525;border:2px solid #1c3d64;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:800;color:#9ec5d8;flex-shrink:0">--</div>
-      <div style="flex:1;min-width:0">
-        <div id="smcTitle" style="font-size:.7rem;font-weight:700;color:#e8f4ff;line-height:1.3">等待分析</div>
-        <div id="smcBias" style="font-size:.6rem;color:#5a8aa8;margin-top:2px;line-height:1.3">HTF偏向: --</div>
-      </div>
-    </div>
-    <div id="smcRows" style="display:flex;flex-direction:column;gap:0">
-      <div style="font-size:.62rem;color:#3a6078;padding:4px 0">⏳ 執行分析後顯示 BOS / CHoCH / FVG 結構...</div>
-    </div>
-  </div>
-
   <div class="sec">
     <div class="sec-title">🔢 神奇九轉 TD Sequential</div>
     <div class="td9-box">
@@ -1368,6 +1326,20 @@ input[type=range]{width:100%;accent-color:#ff1744;cursor:pointer}
   </div>
 
   <!-- ══ 先行訊號偵測面板（財報前異動/新聞反應/供應鏈） ══ -->
+  <div class="sec" id="smcSec">
+    <div class="sec-title">⚡ ICT / SMC 分析</div>
+    <div id="smcPanel" style="padding:0">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:6px">
+        <div id="smcCircle" style="width:42px;height:42px;border-radius:50%;border:2px solid #152d4a;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:.85rem;font-weight:700;color:#5a8aa8;flex-shrink:0">--</div>
+        <div>
+          <div id="smcTitle" style="font-size:.7rem;font-weight:700;color:#9ec5d8">等待分析</div>
+          <div id="smcBias" style="font-size:.6rem;color:#5a8aa8;margin-top:2px">HTF: -- &nbsp; 區間: --</div>
+        </div>
+      </div>
+      <div id="smcRows" style="font-size:.63rem;color:#5a8aa8">--</div>
+    </div>
+  </div>
+
   <div class="sec" id="earlyPanel">
     <div class="sec-title">🔭 先行偵測
       <span class="v9-badge" style="background:#1a2a4a;color:#7eb8ff">ALPHA</span>
@@ -5210,8 +5182,8 @@ function renderMain(ohlcv,a){
   const marks=[];
   a.sigs.forEach(s=>{
     if(s.i>=n)return;
-    if(s.type==='buy')marks.push({time:ohlcv[s.i].time,position:'belowBar',color:'#00e676',shape:'arrowUp',text:'B',size:2});
-    else if(s.type==='sell')marks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff1744',shape:'arrowDown',text:'S',size:2});
+    if(s.type==='buy')marks.push({time:ohlcv[s.i].time,position:'belowBar',color:'#00e676',shape:'arrowUp',text:'B 買入',size:1.5});
+    else if(s.type==='sell')marks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff1744',shape:'arrowDown',text:'S 賣出',size:1.5});
     else marks.push({time:ohlcv[s.i].time,position:'aboveBar',color:'#ff6d00',shape:'circle',text:'!',size:1.5});
   });
   let lastTDMarkIdx = -12;
@@ -5235,72 +5207,25 @@ function renderMain(ohlcv,a){
     lastPatternIdx = i;
   }
 
+  marks.sort((a,b)=>a.time-b.time);
 
-  // ── ICT/SMC 圖表視覺化標記 ──
-  const smcAnForChart = calcICTSmcAnalysis(ohlcv);
-  if (smcAnForChart) {
-    G.smcAnalysis = smcAnForChart;
-
-    // BOS 標記
-    smcAnForChart.bosList.slice(-6).forEach(b => {
-      marks.push({
-        time: b.time,
-        position: b.type==='bull' ? 'belowBar' : 'aboveBar',
-        color: b.type==='bull' ? '#00e676' : '#ff1744',
-        shape: b.type==='bull' ? 'arrowUp' : 'arrowDown',
-        text: 'BOS', size: 1.2
-      });
-    });
-    // CHoCH 標記
-    smcAnForChart.chochList.slice(-4).forEach(c => {
-      marks.push({
-        time: c.time,
-        position: c.type==='bullish' ? 'belowBar' : 'aboveBar',
-        color: c.type==='bullish' ? '#00d4ff' : '#ff9800',
-        shape: 'circle', text: 'CHoCH', size: 1.3
-      });
-    });
-    // 流動性掃蕩標記
-    smcAnForChart.liqSweeps.slice(-3).forEach(s => {
-      marks.push({
-        time: s.time,
-        position: s.type==='bullish' ? 'belowBar' : 'aboveBar',
-        color: '#ce93d8',
-        shape: s.type==='bullish' ? 'arrowUp' : 'arrowDown',
-        text: 'LIQ', size: 1.1
-      });
-    });
-    // FVG 水平線（未填補，最近4個）
-    if (typeof cSer.createPriceLine === 'function') {
-      smcAnForChart.activeFVGs.slice(-4).forEach(fvg => {
-        try {
-          if (fvg.type==='bull') {
-            cSer.createPriceLine({ price:fvg.top, color:'rgba(0,230,118,0.45)', lineWidth:1, lineStyle:2, title:'FVG↑' });
-            cSer.createPriceLine({ price:fvg.bot, color:'rgba(0,230,118,0.2)',  lineWidth:1, lineStyle:3, title:'' });
-          } else {
-            cSer.createPriceLine({ price:fvg.top, color:'rgba(255,23,68,0.2)',  lineWidth:1, lineStyle:3, title:'' });
-            cSer.createPriceLine({ price:fvg.bot, color:'rgba(255,23,68,0.45)', lineWidth:1, lineStyle:2, title:'FVG↓' });
-          }
-        } catch(e) {}
-      });
-      // OTE 區域
-      if (smcAnForChart.inOTE) {
-        try {
-          cSer.createPriceLine({ price:smcAnForChart.oteTop, color:'rgba(255,171,0,0.6)', lineWidth:1, lineStyle:1, title:'OTE 70.5%' });
-          cSer.createPriceLine({ price:smcAnForChart.oteBot, color:'rgba(255,171,0,0.6)', lineWidth:1, lineStyle:1, title:'OTE 61.8%' });
-        } catch(e) {}
-      }
-      // Order Block 最近多頭 OB
-      smcAnForChart.obList.filter(o=>o.type==='bull').slice(-2).forEach(ob => {
-        try {
-          cSer.createPriceLine({ price:ob.top, color:'rgba(0,212,255,0.4)', lineWidth:1, lineStyle:2, title:'OB↑' });
-          cSer.createPriceLine({ price:ob.bot, color:'rgba(0,212,255,0.2)', lineWidth:1, lineStyle:3, title:'' });
-        } catch(e) {}
+  // ── ICT 強信號追加標記 ──
+  try {
+    if(typeof calcICTSignals === 'function') {
+      const ictSigs = calcICTSignals(ohlcv);
+      ictSigs.forEach(function(sig) {
+        marks.push({
+          time: sig.time,
+          position: sig.dir === 'buy' ? 'belowBar' : 'aboveBar',
+          color: sig.dir === 'buy' ? '#00e676' : '#ff1744',
+          shape: sig.dir === 'buy' ? 'arrowUp' : 'arrowDown',
+          text: sig.dir === 'buy' ? 'B 買入 ★ICT' : 'S 賣出 ★ICT',
+          size: 2
+        });
       });
     }
-  }
+  } catch(e) { console.warn('ICT marks:', e); }
 
-  marks.sort((a,b)=>a.time-b.time);
   cSer.setMarkers(marks);
   lwMain.timeScale().fitContent();
 }
@@ -5363,6 +5288,175 @@ function normalizeTickerSymbol(tk){
   // 純數字 → 台股加 .TW
   if(/^\d{4,5}$/.test(tk)) return tk + '.TW';
   return tk;
+}
+
+
+// ═══════════════════════════════════════════════════
+// ICT / SMC 分析函數（v14 獨立模組）
+// ═══════════════════════════════════════════════════
+
+function updSMCPanel(ohlcv) {
+  try {
+    const circ   = document.getElementById('smcCircle');
+    const titleEl= document.getElementById('smcTitle');
+    const biasEl = document.getElementById('smcBias');
+    const rows   = document.getElementById('smcRows');
+    if (!circ || !rows) return;
+    const info = calcSMCInfo(ohlcv);
+    const sigs = calcICTSignals(ohlcv);
+    if (!info) { rows.textContent = '資料不足'; return; }
+    const buyC  = sigs.filter(s => s.dir==='buy').length;
+    const sellC = sigs.filter(s => s.dir==='sell').length;
+    const score = buyC - sellC;
+    const col = score > 2 ? '#00e676' : score > 0 ? '#4caf50' :
+                score < -2 ? '#ff1744' : score < 0 ? '#ff5252' : '#ffab00';
+    circ.textContent = score > 0 ? '+'+score : String(score);
+    circ.style.borderColor = col; circ.style.color = col;
+    const lastSig = sigs[sigs.length-1];
+    let ictFlag = '';
+    if (lastSig && lastSig.dir==='buy')
+      ictFlag = `<span style="background:#00e676;color:#000;font-size:.55rem;padding:1px 5px;border-radius:3px;font-weight:800;margin-left:4px">★ICT買入${lastSig.inOTE?' 🎯OTE':''}</span>`;
+    if (lastSig && lastSig.dir==='sell')
+      ictFlag = `<span style="background:#ff1744;color:#fff;font-size:.55rem;padding:1px 5px;border-radius:3px;font-weight:800;margin-left:4px">★ICT賣出${lastSig.inOTE?' 🎯OTE':''}</span>`;
+    const tc = info.trend==='Bullish' ? '#00e676' : '#ff1744';
+    titleEl.innerHTML = `<span style="color:${tc};font-weight:700">${info.trend==='Bullish'?'📈 多頭':'📉 空頭'}</span>${ictFlag}`;
+    const zl = info.inDiscount
+      ? '<span style="color:#00e676;font-size:.58rem">折價區✅</span>'
+      : '<span style="color:#ff5252;font-size:.58rem">溢價區⚠</span>';
+    biasEl.innerHTML = `HTF: <span style="color:${tc}">${info.trend==='Bullish'?'多頭':'空頭'}</span>&nbsp;${zl}${info.inOTE?'&nbsp;<span style="color:#ffab00;font-size:.58rem">🎯OTE</span>':''}`;
+    let confB=0, confS=0;
+    if (info.trend==='Bullish') confB+=2; else confS+=2;
+    if (info.inDiscount) confB++; else confS++;
+    if (info.inOTE) { confB++; confS++; }
+    if (info.bos) confB+=2;
+    if (info.eqL) confB++;
+    if (info.eqH) confS++;
+    confB += buyC; confS += sellC;
+    const mx = Math.max(confB, confS, 1);
+    let html = `<div style="margin-bottom:6px"><div style="font-size:.58rem;color:#5a8aa8;margin-bottom:3px">多頭匯合 <b style="color:${confB>=4?'#00e676':'#5a8aa8'}">${confB}</b>&nbsp;空頭匯合 <b style="color:${confS>=4?'#ff1744':'#5a8aa8'}">${confS}</b></div><div style="display:flex;gap:3px"><div style="flex:1;height:5px;border-radius:3px;background:rgba(0,230,118,.12)"><div style="width:${(confB/mx*100).toFixed(0)}%;height:100%;background:#00e676;border-radius:3px"></div></div><div style="flex:1;height:5px;border-radius:3px;background:rgba(255,23,68,.12)"><div style="width:${(confS/mx*100).toFixed(0)}%;height:100%;background:#ff1744;border-radius:3px"></div></div></div></div>`;
+    const rw = (icon,lbl,val,c) => `<div style="display:flex;justify-content:space-between;padding:3px 0;border-bottom:1px solid #0e1f33"><span style="color:#5a8aa8">${icon} ${lbl}</span><span style="color:${c||'#9ec5d8'};font-weight:700">${val}</span></div>`;
+    html += rw('📐','EQ均衡線',  info.eq.toFixed(2),     '#9ec5d8');
+    html += rw('🎯','OTE 61.8%', info.ote618.toFixed(2), '#ffab00');
+    html += rw('🎯','OTE 70.5%', info.ote705.toFixed(2), '#ffab00');
+    html += rw('🎯','OTE 79%',   info.ote79.toFixed(2),  '#ff8f00');
+    if (info.bos) html += rw('🔼','BOS突破', info.bos, '#00e676');
+    if (info.eqL) html += rw('⚖','Equal Lows',  '流動性集中', '#ce93d8');
+    if (info.eqH) html += rw('⚖','Equal Highs', '流動性集中', '#ce93d8');
+    if (info.lastFVG) html += rw('⚡','最近FVG', info.lastFVG.type==='bull'?'多頭FVG':'空頭FVG', info.lastFVG.type==='bull'?'#00e676':'#ff1744');
+    html += rw('🛡','ICT買入信號', buyC+'次',  '#00e676');
+    html += rw('⚔','ICT賣出信號', sellC+'次', '#ff1744');
+    html += `<div style="margin-top:6px;padding:6px 8px;border-radius:4px;background:rgba(14,31,51,.9);font-size:.62rem"><div style="color:#5a8aa8;margin-bottom:4px;font-weight:700">📐 SL / TP（RR 1:2 / 1:3）</div><div style="display:flex;gap:8px;flex-wrap:wrap"><span style="color:#ff1744">SL: <b>${info.slPrice.toFixed(2)}</b></span><span style="color:#4caf50">TP1: <b>${info.tp1.toFixed(2)}</b></span><span style="color:#00e676">TP2: <b>${info.tp2.toFixed(2)}</b></span></div><div style="color:#3a6078;font-size:.56rem;margin-top:3px">※ 以近20根均幅8%估算，僅供參考</div></div>`;
+    rows.innerHTML = html;
+  } catch(e) { console.warn('[updSMCPanel]', e); }
+}
+
+function calcICTSignals(ohlcv) {
+  const sigs = [];
+  if (!ohlcv || ohlcv.length < 30) return sigs;
+  const n = ohlcv.length;
+  try {
+    const fvgs = [];
+    for (let i = 1; i < n - 1; i++) {
+      const p = ohlcv[i-1], nx = ohlcv[i+1];
+      if (nx.low > p.high) fvgs.push({type:'bull', top:nx.low, bot:p.high, ce:(nx.low+p.high)/2, i:i});
+      if (nx.high < p.low) fvgs.push({type:'bear', top:p.low, bot:nx.high, ce:(p.low+nx.high)/2, i:i});
+    }
+    const swH = [], swL = [];
+    for (let i = 3; i < n - 3; i++) {
+      let h = true, l = true;
+      for (let j = 1; j <= 3; j++) {
+        if (ohlcv[i].high <= ohlcv[i-j].high || ohlcv[i].high <= ohlcv[i+j].high) h = false;
+        if (ohlcv[i].low  >= ohlcv[i-j].low  || ohlcv[i].low  >= ohlcv[i+j].low)  l = false;
+      }
+      if (h) swH.push({v:ohlcv[i].high, i:i});
+      if (l) swL.push({v:ohlcv[i].low,  i:i});
+    }
+    for (let i = 10; i < n - 1; i++) {
+      const c = ohlcv[i];
+      const rL = swL.filter(s => s.i < i && s.i >= i-20);
+      if (!rL.length) continue;
+      const lL = rL[rL.length-1];
+      if (!(c.low < lL.v && c.close > lL.v)) continue;
+      const bFVG = fvgs.filter(f => f.type==='bull' && f.i >= i-10 && f.i < i);
+      if (!bFVG.length) continue;
+      const rH = swH.filter(s => s.i < i && s.i >= i-25);
+      const lH = rH.length ? rH[rH.length-1] : null;
+      const rng = lH ? lH.v - lL.v : 0;
+      const inOTE = rng > 0 && c.close >= (lH.v - rng*0.79) && c.close <= (lH.v - rng*0.618);
+      const nx = ohlcv[i+1];
+      let conf = 1;
+      if (bFVG.length) conf++;
+      if (inOTE) conf++;
+      if (nx && nx.close > c.close) conf++;
+      if (i > 0 && c.volume > ohlcv[i-1].volume * 1.2) conf++;
+      if (conf >= 3) sigs.push({time:c.time, dir:'buy', score:conf, inOTE, swept:true, hasFVG:true});
+    }
+    for (let i = 10; i < n - 1; i++) {
+      const c = ohlcv[i];
+      const rH = swH.filter(s => s.i < i && s.i >= i-20);
+      if (!rH.length) continue;
+      const lH = rH[rH.length-1];
+      if (!(c.high > lH.v && c.close < lH.v)) continue;
+      const bFVG = fvgs.filter(f => f.type==='bear' && f.i >= i-10 && f.i < i);
+      if (!bFVG.length) continue;
+      const rL = swL.filter(s => s.i < i && s.i >= i-25);
+      const lL = rL.length ? rL[rL.length-1] : null;
+      const rng = lL ? lH.v - lL.v : 0;
+      const inOTE = rng > 0 && c.close >= (lL.v + rng*0.618) && c.close <= (lL.v + rng*0.79);
+      const nx = ohlcv[i+1];
+      let conf = 1;
+      if (bFVG.length) conf++;
+      if (inOTE) conf++;
+      if (nx && nx.close < c.close) conf++;
+      if (i > 0 && c.volume > ohlcv[i-1].volume * 1.2) conf++;
+      if (conf >= 3) sigs.push({time:c.time, dir:'sell', score:conf, inOTE, swept:true, hasFVG:true});
+    }
+    const seen = new Set();
+    return sigs.filter(s => { if(seen.has(s.time)) return false; seen.add(s.time); return true; });
+  } catch(e) {
+    console.warn('[calcICTSignals]', e);
+    return [];
+  }
+}
+
+function calcSMCInfo(ohlcv) {
+  if (!ohlcv || ohlcv.length < 20) return null;
+  const n = ohlcv.length;
+  try {
+    const last = ohlcv[n-1];
+    const prev20 = ohlcv.slice(n-20);
+    const hh = prev20.reduce((m,x) => Math.max(m,x.high), 0);
+    const ll = prev20.reduce((m,x) => Math.min(m,x.low), Infinity);
+    const eq = (hh + ll) / 2;
+    const rng = hh - ll;
+    const ote618 = hh - rng * 0.618;
+    const ote705 = hh - rng * 0.705;
+    const ote79  = hh - rng * 0.79;
+    const inOTE  = last.close >= ote79 && last.close <= ote618;
+    const inDiscount = last.close < eq;
+    const ma10 = ohlcv.slice(n-10).reduce((s,x)=>s+x.close,0)/10;
+    const ma20 = prev20.reduce((s,x)=>s+x.close,0)/20;
+    const trend = ma10 > ma20 ? 'Bullish' : 'Bearish';
+    const prev50 = ohlcv.slice(Math.max(0,n-50));
+    const prevHH = prev50.slice(0, prev50.length-5).reduce((m,x)=>Math.max(m,x.high),0);
+    const bos = last.close > prevHH ? 'Bullish BOS' : null;
+    const eqH = prev20.filter(x => Math.abs(x.high - hh)/hh < 0.001).length >= 2;
+    const eqL = prev20.filter(x => Math.abs(x.low  - ll)/ll < 0.001).length >= 2;
+    let lastFVG = null;
+    for (let i = Math.max(1,n-6); i < n-1; i++) {
+      const p=ohlcv[i-1], nx=ohlcv[i+1];
+      if (nx && nx.low > p.high) lastFVG = {type:'bull', top:nx.low, bot:p.high};
+      if (nx && nx.high < p.low) lastFVG = {type:'bear', top:p.low, bot:nx.high};
+    }
+    const slDist = rng * 0.08;
+    const slPrice = inDiscount ? last.close - slDist : last.close + slDist;
+    const tp1     = inDiscount ? last.close + slDist*2 : last.close - slDist*2;
+    const tp2     = inDiscount ? last.close + slDist*3 : last.close - slDist*3;
+    return {eq, hh, ll, rng, ote618, ote705, ote79, inOTE, inDiscount,
+            trend, bos, eqH, eqL, lastFVG, slPrice, tp1, tp2, ma10, ma20};
+  } catch(e) {
+    return null;
+  }
 }
 
 async function runAnalysis(tk){
@@ -5746,7 +5840,7 @@ async function runAnalysis(tk){
   updSigQuality(a, chipAn, filtAn);
 
   // ── 異步取得真實 TWSE 籌碼（不阻塞主流程）──
-  if(tk.endsWith('.TW')||tk.endsWith('.TWO')){
+  if(G.apiOnline===true && (tk.endsWith('.TW')||tk.endsWith('.TWO'))){
     fetchRealChips(tk).then(apiResp=>{
       if(!apiResp) return;
       const rc  = apiResp.chips;          // 最新日籌碼
@@ -5795,9 +5889,7 @@ async function runAnalysis(tk){
                           sum.consec_buy_days>=1 ? `外資買超${sum.consec_buy_days}日` :
                           `外資賣超`;
         const fmtK = v => v>=0?`+${(v/1000).toFixed(0)}張`:`${(v/1000).toFixed(0)}張`;
-        const mgTxt = (mg&&mg.margin_change_pct) ?
-          ` | 融資${mg.margin_change_pct>0?'+':''}${mg.margin_change_pct.toFixed(1)}%` : '';
-        toast(`✅ ${tk} 真實TWSE籌碼 | 三大法人:${fmtK(total)} | ${consecTxt}${mgTxt}`,
+        toast(`✅ ${tk} 真實TWSE籌碼 | 三大法人:${fmtK(total)} | ${consecTxt}`,
               total>0?'buy':total<0?'sell':'info', 6000);
       }
     }).catch(e=>{ console.warn('fetchRealChips failed:',e); });
@@ -5807,12 +5899,11 @@ async function runAnalysis(tk){
   $('btRunBtn').textContent='▶ 執行回測（'+ohlcv.length+'根K線）';
 
   renderMain(ohlcv,a);renderSub(ohlcv,G.sub);
-  if(typeof window.renderQ6==="function") window.renderQ6(ohlcv);
   // ── ICT/SMC 面板更新 ──
-  if(G.smcAnalysis) updSMCPanel(G.smcAnalysis);
-  else { const smcTmp=calcICTSmcAnalysis(ohlcv); if(smcTmp){ G.smcAnalysis=smcTmp; updSMCPanel(smcTmp); } }
+  try { updSMCPanel(ohlcv); } catch(e) { console.warn('updSMCPanel:', e); }
+  if(typeof window.renderQ6==="function") window.renderQ6(ohlcv);
 
-  ld.style.opacity='0';document.body.style.opacity='1';setTimeout(()=>{ld.classList.add('hidden');
+  ld.style.opacity='0';setTimeout(()=>{ld.classList.add('hidden');
   // 手機：分析完成自動跳到 AI決策面板
   if(window.innerWidth<=768) setTimeout(()=>switchMobTab('left'),200);ld.style.opacity='';},400);
 
@@ -6848,284 +6939,23 @@ async function refreshTape(){
 ════════════════════════════════════════════ */
 /* fetchRealChips：取得完整 TWSE 籌碼 API 回應 */
 async function fetchRealChips(tk){
-  // ✅ 直接向 TWSE 公開 API 取三大法人 + 融資融券（不需後端）
-  const isTW = tk.endsWith('.TW') || tk.endsWith('.TWO');
-  if(!isTW) return null;
-  const code = tk.replace('.TW','').replace('.TWO','');
-  const ts   = Date.now();
-  const hdrs = {'User-Agent':'Mozilla/5.0','Referer':'https://www.twse.com.tw/'};
-
-  // ── 快取：當日已取過就直接回傳 ──
-  const cKey = `twse_chip_${code}_${new Date().toISOString().slice(0,10)}`;
-  const cached = sessionStorage.getItem(cKey);
-  if(cached){ try{ return JSON.parse(cached); }catch(e){} }
-
-  // ── 共用 CORS proxy 輔助 ──
-  const PROXIES=[
-    u=>`https://corsproxy.io/?${encodeURIComponent(u)}`,
-    u=>`https://api.allorigins.win/raw?url=${encodeURIComponent(u)}`,
-    u=>`https://api.codetabs.com/v1/proxy?quest=${encodeURIComponent(u)}`,
-  ];
-  async function safeFetch(url, timeout=10000){
-    // 先直連
-    try{
-      const r = await fetch(url,{signal:AbortSignal.timeout(timeout)});
-      if(r.ok){ const t=await r.text(); if(t&&t.length>10) return t; }
-    }catch(e){}
-    // Proxy 輪流
-    for(const p of PROXIES){
-      try{
-        const r = await fetch(p(url),{signal:AbortSignal.timeout(timeout)});
-        if(r.ok){ const t=await r.text(); if(t&&t.length>10){
-          // allorigins 包了一層 contents
-          try{ const j=JSON.parse(t); if(j.contents) return j.contents; }catch(e){}
-          return t;
-        }}
-      }catch(e){}
-    }
-    return null;
-  }
-
+  if(G.apiOnline !== true) return null;
   try{
-    // ── A. 三大法人個股買賣超（TWSE TWT38U）──
-    const instUrl = `https://www.twse.com.tw/rwd/zh/fund/TWT38U?stockNo=${code}&response=json&_=${ts}`;
-    const instTxt = await safeFetch(instUrl);
-    if(!instTxt) return null;
-    let instJson; try{ instJson=JSON.parse(instTxt); }catch(e){ return null; }
-    const rows = instJson?.data || [];
-    if(rows.length < 1) return null;
-
-    const si = s => { try{ return parseInt(String(s).replace(/,/g,'').replace(/\+/g,'')||'0'); }catch(e){return 0;} };
-    // 欄位：[日期, 外資買, 外資賣, 外資淨, 投信買, 投信賣, 投信淨, 自營買, 自營賣, 自營淨, 合計]
-    const recent = rows.slice(-20);
-    const foreign_net = recent.map(r=>si(r[3]));
-    const trust_net   = recent.map(r=>si(r[6]));
-    const dealer_net  = recent.map(r=>si(r[9]));
-    const three_total = recent.map(r=>si(r[10]));
-    const dates       = recent.map(r=>r[0]);
-
-    // 最新一日
-    const last = recent[recent.length-1];
-    const chips = {
-      foreign_total: si(last[3]),
-      invest_net:    si(last[6]),
-      dealer_net:    si(last[9]),
-      total_inst:    si(last[10]),
-    };
-
-    // 連續買超/賣超天數
-    let consec_buy=0, consec_sell=0;
-    for(let i=foreign_net.length-1;i>=0;i--){
-      if(foreign_net[i]>0){ if(consec_sell>0) break; consec_buy++; }
-      else if(foreign_net[i]<0){ if(consec_buy>0) break; consec_sell++; }
-      else break;
-    }
-    // 近5日外資累積
-    const foreign_5d_net = foreign_net.slice(-5).reduce((a,b)=>a+b,0);
-
-    const summary = {
-      consec_buy_days:  consec_buy,
-      consec_sell_days: consec_sell,
-      foreign_5d_net,
-      strength: consec_buy>=5?'強力買超':consec_buy>=3?'持續買超':
-                consec_buy>=1?'買超':consec_sell>=3?'持續賣超':'賣超',
-    };
-
-    // ── B. 融資融券（TWSE MI_MARGN）──
-    let margin = { margin_balance:0, margin_change_pct:0, short_balance:0 };
-    try{
-      const mUrl = `https://www.twse.com.tw/rwd/zh/marginTrading/MI_MARGN?stockNo=${code}&response=json&_=${ts+1}`;
-      const mTxt = await safeFetch(mUrl, 8000);
-      if(mTxt){
-        let mJson; try{ mJson=JSON.parse(mTxt); }catch(e){}
-        const mRows = mJson?.data||[];
-        if(mRows.length>=2){
-          const cur=mRows[mRows.length-1], prv=mRows[mRows.length-2];
-          // 欄位：[日期,融資買,融資賣,融資償還,融資餘額,融資限額,融券賣,融券買,融券償還,融券餘額,...]
-          const mb_now  = si(cur[4]), mb_prev = si(prv[4]);
-          const sb_now  = si(cur[9]||cur[7]||'0');
-          margin = {
-            margin_balance:    mb_now,
-            margin_change_pct: mb_prev>0 ? parseFloat(((mb_now-mb_prev)/mb_prev*100).toFixed(2)) : 0,
-            short_balance:     sb_now,
-          };
-        }
-      }
-    }catch(e){ console.warn('[fetchRealChips] margin:', e.message); }
-
-    const result = {
-      available: true,
-      chips, summary, margin,
-      history: recent.map((r,i)=>({
-        date: dates[i],
-        foreign_net: foreign_net[i],
-        trust_net:   trust_net[i],
-        dealer_net:  dealer_net[i],
-        three_total: three_total[i],
-      })),
-    };
-    sessionStorage.setItem(cKey, JSON.stringify(result));
-    console.log(`[fetchRealChips] ✅ TWSE直連 ${tk} | 外資:${chips.foreign_total} | 融資餘額:${margin.margin_balance}`);
-    return result;
-
+    const ctrl = new AbortController();
+    setTimeout(()=>ctrl.abort(), 8000);   // 籌碼API需要多抓幾日，給8秒
+    const r = await fetch(
+      `${G.apiBase}/api/chips?tk=${encodeURIComponent(tk)}&days=5`,
+      {signal: ctrl.signal}
+    );
+    if(!r.ok) return null;
+    const d = await r.json();
+    if(d.available && d.chips) return d;    // 回傳完整 d（含 summary/history/margin）
+    console.warn('fetchRealChips: available=false', d.note||'');
+    return null;
   }catch(e){
-    console.warn('[fetchRealChips] 失敗:', e.message);
+    console.warn('fetchRealChips error:', e.message);
     return null;
   }
-}
-
-
-// ══════════════════════════════════════════════════════════════════
-// 🧠 ICT/SMC 聰明錢概念分析引擎（Smart Money Concepts）
-// BOS / CHoCH / FVG / OrderBlock / LiquiditySweep / OTE
-// ══════════════════════════════════════════════════════════════════
-function calcICTSmcAnalysis(ohlcv) {
-  const n = ohlcv.length;
-  if (n < 30) return null;
-
-  const hi = ohlcv.map(b => b.high);
-  const lo = ohlcv.map(b => b.low);
-  const cl = ohlcv.map(b => b.close);
-  const op = ohlcv.map(b => b.open);
-
-  // ── 1. 擺動高低點（Swing High / Swing Low）──
-  const SW = 3;
-  const swingHighs = [], swingLows = [];
-  for (let i = SW; i < n - SW; i++) {
-    if (hi.slice(i-SW,i).every(v=>v<hi[i]) && hi.slice(i+1,i+SW+1).every(v=>v<hi[i]))
-      swingHighs.push({ i, v: hi[i], time: ohlcv[i].time });
-    if (lo.slice(i-SW,i).every(v=>v>lo[i]) && lo.slice(i+1,i+SW+1).every(v=>v>lo[i]))
-      swingLows.push({ i, v: lo[i], time: ohlcv[i].time });
-  }
-
-  // ── 2. BOS（Break of Structure，結構突破）──
-  const bosList = [];
-  for (let i = 20; i < n; i++) {
-    const prevSH = swingHighs.filter(s=>s.i < i-2).slice(-1)[0];
-    const prevSL = swingLows.filter(s=>s.i < i-2).slice(-1)[0];
-    if (prevSH && cl[i] > prevSH.v && cl[i-1] <= prevSH.v)
-      bosList.push({ i, type:'bull', level:prevSH.v, time:ohlcv[i].time });
-    if (prevSL && cl[i] < prevSL.v && cl[i-1] >= prevSL.v)
-      bosList.push({ i, type:'bear', level:prevSL.v, time:ohlcv[i].time });
-  }
-
-  // ── 3. CHoCH（Change of Character，性格轉變）──
-  const chochList = [];
-  for (let i = 20; i < n; i++) {
-    const prevSL = swingLows.filter(s=>s.i < i-2).slice(-1)[0];
-    const prevSH = swingHighs.filter(s=>s.i < i-2).slice(-1)[0];
-    const lastBull = bosList.filter(b=>b.type==='bull' && b.i<i-2).slice(-1)[0];
-    const lastBear = bosList.filter(b=>b.type==='bear' && b.i<i-2).slice(-1)[0];
-    if (lastBull && prevSL && cl[i] < prevSL.v && cl[i-1] >= prevSL.v)
-      chochList.push({ i, type:'bearish', level:prevSL.v, time:ohlcv[i].time });
-    if (lastBear && prevSH && cl[i] > prevSH.v && cl[i-1] <= prevSH.v)
-      chochList.push({ i, type:'bullish', level:prevSH.v, time:ohlcv[i].time });
-  }
-
-  // ── 4. FVG（Fair Value Gap，公平價值差距）──
-  const fvgList = [];
-  for (let i = 1; i < n - 1; i++) {
-    const displacement = Math.abs(cl[i] - op[i]) / (cl[i] || 1);
-    if (displacement < 0.004) continue; // 過濾無效小K線
-    if (lo[i-1] > hi[i+1])  // 多頭FVG
-      fvgList.push({ i, type:'bull', top:lo[i-1], bot:hi[i+1], mid:(lo[i-1]+hi[i+1])/2, time:ohlcv[i].time, mitigated:false });
-    if (hi[i-1] < lo[i+1])  // 空頭FVG
-      fvgList.push({ i, type:'bear', top:lo[i+1], bot:hi[i-1], mid:(lo[i+1]+hi[i-1])/2, time:ohlcv[i].time, mitigated:false });
-  }
-  // 標記已填補（mitigated）的 FVG
-  fvgList.forEach(fvg => {
-    for (let j = fvg.i + 2; j < n; j++) {
-      if (fvg.type==='bull' && lo[j] <= fvg.bot) { fvg.mitigated=true; break; }
-      if (fvg.type==='bear' && hi[j] >= fvg.top) { fvg.mitigated=true; break; }
-    }
-  });
-
-  // ── 5. Order Block（訂單塊 / 機構成本區）──
-  const obList = [];
-  for (let i = 1; i < n - 3; i++) {
-    const isBear = cl[i] < op[i], isBull = cl[i] > op[i];
-    const nextMove = cl[i+3] - cl[i+1];
-    if (Math.abs(nextMove) / (cl[i]||1) < 0.01) continue;
-    if (isBear && nextMove > 0) obList.push({ i, type:'bull', top:op[i], bot:cl[i], time:ohlcv[i].time });
-    if (isBull && nextMove < 0) obList.push({ i, type:'bear', top:cl[i], bot:op[i], time:ohlcv[i].time });
-  }
-
-  // ── 6. 流動性獵取（Liquidity Sweep）偵測 ──
-  const liqSweeps = [];
-  for (let i = 10; i < n; i++) {
-    const recent10H = Math.max(...hi.slice(i-10, i-1));
-    const recent10L = Math.min(...lo.slice(i-10, i-1));
-    if (hi[i] > recent10H && cl[i] < recent10H)
-      liqSweeps.push({ i, type:'bearish', level:recent10H, time:ohlcv[i].time });
-    if (lo[i] < recent10L && cl[i] > recent10L)
-      liqSweeps.push({ i, type:'bullish', level:recent10L, time:ohlcv[i].time });
-  }
-
-  // ── 7. 評分與信號 ──
-  const last = n - 1, lastClose = cl[last];
-  let smcScore = 0;
-  const smcDetails = [];
-
-  const lastBOS   = bosList.slice(-1)[0];
-  const lastCHoCH = chochList.slice(-1)[0];
-  const lastSweep = liqSweeps.slice(-1)[0];
-  const activeFVGs  = fvgList.filter(f => !f.mitigated).slice(-6);
-  const nearBullFVG = activeFVGs.filter(f => f.type==='bull' && lastClose > f.bot*0.998 && lastClose < f.top*1.002);
-  const nearBearFVG = activeFVGs.filter(f => f.type==='bear' && lastClose < f.top*1.002 && lastClose > f.bot*0.998);
-
-  // BOS 評分
-  if (lastBOS) {
-    const age = last - lastBOS.i;
-    if (lastBOS.type==='bull' && age<=10) { smcScore += age<=3?8:5; smcDetails.push(`✅ BOS多頭突破（${age}根前）結構確認`); }
-    else if (lastBOS.type==='bear' && age<=10) { smcScore -= age<=3?8:5; smcDetails.push(`🔴 BOS空頭突破（${age}根前）結構轉弱`); }
-  }
-  // CHoCH 評分
-  if (lastCHoCH && (last - lastCHoCH.i) <= 8) {
-    if (lastCHoCH.type==='bullish') { smcScore += 6; smcDetails.push(`🔄 CHoCH多頭反轉（${last-lastCHoCH.i}根前）趨勢轉換`); }
-    else { smcScore -= 6; smcDetails.push(`🔄 CHoCH空頭反轉（${last-lastCHoCH.i}根前）趨勢轉換`); }
-  }
-  // FVG 評分
-  if (nearBullFVG.length > 0) { smcScore += 4; smcDetails.push(`⚡ 現價位於多頭FVG支撐區（${nearBullFVG.length}個）`); }
-  if (nearBearFVG.length > 0) { smcScore -= 4; smcDetails.push(`⚡ 現價位於空頭FVG壓力區（${nearBearFVG.length}個）`); }
-  // 流動性掃蕩評分
-  if (lastSweep && (last - lastSweep.i) <= 5) {
-    if (lastSweep.type==='bullish') { smcScore += 5; smcDetails.push(`🌊 流動性掃蕩（掃低後反彈）— 聰明錢吸籌`); }
-    else { smcScore -= 5; smcDetails.push(`🌊 流動性掃蕩（掃高後回落）— 聰明錢出貨`); }
-  }
-  // OB 評分
-  const nearBullOB = obList.filter(o=>o.type==='bull' && lastClose>=o.bot*0.998 && lastClose<=o.top*1.01).slice(-1)[0];
-  const nearBearOB = obList.filter(o=>o.type==='bear' && lastClose<=o.top*1.002 && lastClose>=o.bot*0.99).slice(-1)[0];
-  if (nearBullOB) { smcScore += 3; smcDetails.push(`📦 現價位於多頭訂單塊支撐`); }
-  if (nearBearOB) { smcScore -= 3; smcDetails.push(`📦 現價位於空頭訂單塊壓力`); }
-  // 高勝率組合
-  if (lastBOS?.type==='bull' && nearBullFVG.length>0 && (last-lastBOS.i)<=10) {
-    smcScore += 4; smcDetails.push(`🌟 高勝率組合：BOS多頭 + FVG支撐（順勢入場）`);
-  }
-  if (lastCHoCH?.type==='bullish' && nearBullFVG.length>0 && lastSweep?.type==='bullish') {
-    smcScore += 5; smcDetails.push(`🎯 最強組合：掃蕩 + CHoCH + FVG（三重確認）`);
-  }
-
-  smcScore = Math.max(-15, Math.min(15, smcScore));
-  const smcSignal = smcScore>=8?'Strong Bullish': smcScore>=4?'Bullish':
-                    smcScore<=-8?'Strong Bearish': smcScore<=-4?'Bearish':'Neutral';
-
-  // OTE 區域（Fibonacci 0.618-0.705 最佳入場區）
-  const recSH = swingHighs.slice(-1)[0]?.v || lastClose;
-  const recSL = swingLows.slice(-1)[0]?.v  || lastClose*0.95;
-  const oteTop = recSL + (recSH - recSL) * 0.705;
-  const oteBot = recSL + (recSH - recSL) * 0.618;
-  const inOTE  = lastClose >= oteBot && lastClose <= oteTop;
-  const htfBias= cl[last] > cl[Math.max(0,last-20)] ? 'Bullish' : 'Bearish';
-
-  return {
-    smcScore, smcSignal, smcDetails, htfBias, inOTE, oteTop, oteBot,
-    bosList: bosList.slice(-10), chochList: chochList.slice(-5),
-    fvgList: fvgList.slice(-12), obList: obList.slice(-8),
-    liqSweeps: liqSweeps.slice(-5), activeFVGs,
-    nearBullFVG, nearBearFVG, nearBullOB, nearBearOB,
-    lastBOS, lastCHoCH, lastSweep,
-    swingHighs: swingHighs.slice(-8), swingLows: swingLows.slice(-8),
-  };
 }
 
 function calcChipAnalysis(ohlcv, tk, techAn){
@@ -7535,31 +7365,14 @@ function updChipUI(ch){
       {k:'🏦 外資合計淨買',   v:`${fmtK(fNet)}（${fNet>=0?'買超':'賣超'}）`, bar:(fNet+5000000)/10000000*100, c:fNet>=0?'bull':'bear'},
       {k:'💼 投信淨買超',     v:`${fmtK(iNet)}（${iNet>=0?'買超':'賣超'}）`, bar:(iNet+1000000)/2000000*100,  c:iNet>=0?'bull':'bear'},
       {k:'🏢 自營商淨買',     v:`${fmtK(dNet)}`,                              bar:(dNet+1000000)/2000000*100,  c:dNet>=0?'bull':'bear'},
-      {k:`⚡ 連續${consecDays>=0?'買':'賣'}超天數`, v:`${Math.abs(consecDays)}天 ${consecDays>=3?'🔥':consecDays<=-3?'🚨':''}`,
+      {k:`⚡ 連續${consecDays>=0?'買':'賣'}超天數`, v:`${Math.abs(consecDays)}天`,
        bar:Math.min(100,Math.abs(consecDays)/5*100), c:consecDays>=3?'bull':consecDays<=-2?'bear':'amber'},
-      {k:'📈 近5日外資累積', v:`${(sum.foreign_5d_net||0)>0?'+':''}${((sum.foreign_5d_net||0)/1000).toFixed(0)}張`,
-       bar:Math.min(100,Math.max(0,50+(sum.foreign_5d_net||0)/100000*50)),
-       c:(sum.foreign_5d_net||0)>=0?'bull':'bear'},
     ];
-    if(mg && mg.margin_balance>0){
-      const mbChg = mg.margin_change_pct||0;
-      const mbChgTxt = mbChg>0?`+${mbChg.toFixed(1)}%`:mbChg<0?`${mbChg.toFixed(1)}%`:'持平';
-      const mbColor  = mbChg< -2?'bull': mbChg>5?'bear':'amber'; // 融資減少=多頭健康
-      realRows.push({k:'💳 融資餘額',
-        v:`${(mg.margin_balance/1000).toFixed(0)}千張（${mbChgTxt}）`,
-        bar:Math.min(100,mg.margin_balance/5000000*100), c:mbColor});
-      if(mg.short_balance>0){
-        const sratio = mg.margin_balance>0
-          ? (mg.short_balance/mg.margin_balance*100).toFixed(1)+'%' : '--';
-        realRows.push({k:'📉 融券餘額',
-          v:`${(mg.short_balance/1000).toFixed(1)}千張（券資比${sratio}）`,
-          bar:Math.min(100,mg.short_balance/500000*100), c:'cyan'});
-      }
-      // 核心組合信號
-      if(mbChg < -2 && (sum.consec_buy_days||0)>=3)
-        realRows.push({k:'🌟 核心信號', v:'外資連買≥3日 且 融資減少（籌碼最乾淨）', bar:100, c:'bull'});
-      else if(mbChg > 5 && (sum.consec_sell_days||0)>=3)
-        realRows.push({k:'🚨 警報信號', v:'外資連賣≥3日 且 融資增加（主力出貨）', bar:100, c:'bear'});
+    if(mg){
+      realRows.push({k:'💳 融資餘額',    v:`${(mg.margin_balance/1000).toFixed(0)}千張`,
+                    bar:Math.min(100,mg.margin_balance/5000000*100), c:'amber'});
+      realRows.push({k:'📉 融券餘額',    v:`${(mg.short_balance/1000).toFixed(1)}千張`,
+                    bar:Math.min(100,mg.short_balance/500000*100),   c:'cyan'});
     }
     // 5日外資走勢（用 history）
     if(ch.realHistory && ch.realHistory.length>=2){
@@ -7586,100 +7399,16 @@ function updChipUI(ch){
         <span class="cr-v ${r.c||''}">${r.v}</span>
       </div>`).join('');
   }
+  $('chipSub').textContent=
+    `外資:${ch.foreignScore>0?'+':''}${ch.foreignScore} | 融資:${ch.marginScore>0?'+':''}${ch.marginScore} | 成本:${ch.vwapDiff>=0?'+':''}${ch.vwapDiff.toFixed(1)}%`;
+
+  $('chipRows').innerHTML = ch.rows.map(r=>`
+    <div class="cr">
+      <span class="cr-k">${r.k}</span>
+      <div class="cr-bar-wrap"><div class="cr-bar" style="width:${r.bar}%;background:${r.c==='bull'?'#00e676':r.c==='bear'?'#ff1744':'#ffab00'}"></div></div>
+      <span class="cr-v ${r.c||''}">${r.v}</span>
+    </div>`).join('');
 }
-
-// ══════════════════════════════════════════════════════════════════
-// 🧠 ICT/SMC 面板更新函數
-// ══════════════════════════════════════════════════════════════════
-function updSMCPanel(smcAn) {
-  if (!smcAn) return;
-  const circ  = document.getElementById('smcCircle');
-  const title = document.getElementById('smcTitle');
-  const bias  = document.getElementById('smcBias');
-  const rows  = document.getElementById('smcRows');
-  if (!circ || !rows) return;
-
-  const s = smcAn.smcScore;
-  circ.textContent = s > 0 ? '+' + s : String(s);
-  const scoreColor = s >= 6 ? '#00e676' : s >= 2 ? '#4caf50' : s <= -6 ? '#ff1744' : s <= -2 ? '#ff5252' : '#ffab00';
-  circ.style.borderColor = scoreColor;
-  circ.style.color = scoreColor;
-
-  const sigMap = {
-    'Strong Bullish': ['🟢 強力多頭結構', '#00e676'],
-    'Bullish':        ['🟩 多頭結構偏強', '#4caf50'],
-    'Neutral':        ['⬜ 結構中性觀望', '#9ec5d8'],
-    'Bearish':        ['🟥 空頭結構偏弱', '#ff5252'],
-    'Strong Bearish': ['🔴 強力空頭結構', '#ff1744'],
-  };
-  const [sigText, sigColor] = sigMap[smcAn.smcSignal] || ['--', '#9ec5d8'];
-  title.innerHTML = `<span style="color:${sigColor};font-weight:700">${sigText}</span>`;
-  bias.innerHTML =
-    `HTF偏向: <span style="color:${smcAn.htfBias==='Bullish'?'#00e676':'#ff1744'}">${smcAn.htfBias==='Bullish'?'📈 多頭':'📉 空頭'}</span>` +
-    (smcAn.inOTE ? ' &nbsp;<span style="color:#ffab00;font-size:.6rem">🎯 OTE最佳入場區</span>' : '');
-
-  const rowData = [];
-
-  // BOS
-  if (smcAn.lastBOS) {
-    const age = smcAn.bosList.length ? smcAn.bosList[smcAn.bosList.length-1].i : 0;
-    rowData.push({
-      icon: smcAn.lastBOS.type==='bull' ? '📈' : '📉',
-      label: `BOS ${smcAn.lastBOS.type==='bull'?'多頭結構突破':'空頭結構突破'}`,
-      value: `@ ${smcAn.lastBOS.level.toFixed(2)}`,
-      color: smcAn.lastBOS.type==='bull' ? '#00e676' : '#ff1744',
-    });
-  }
-  // CHoCH
-  if (smcAn.lastCHoCH) {
-    rowData.push({
-      icon: '🔄',
-      label: `CHoCH ${smcAn.lastCHoCH.type==='bullish'?'多頭性格轉換':'空頭性格轉換'}`,
-      value: `@ ${smcAn.lastCHoCH.level.toFixed(2)}`,
-      color: smcAn.lastCHoCH.type==='bullish' ? '#00d4ff' : '#ff9800',
-    });
-  }
-  // FVG
-  const bullFVG = smcAn.activeFVGs.filter(f=>f.type==='bull').length;
-  const bearFVG = smcAn.activeFVGs.filter(f=>f.type==='bear').length;
-  if (smcAn.activeFVGs.length > 0) {
-    rowData.push({
-      icon: '⚡',
-      label: `未填補FVG（多:${bullFVG} 空:${bearFVG}）`,
-      value: smcAn.nearBullFVG.length>0 ? '現價位於FVG支撐' :
-             smcAn.nearBearFVG.length>0 ? '現價位於FVG壓力' : '未觸及FVG',
-      color: smcAn.nearBullFVG.length>0 ? '#00e676' :
-             smcAn.nearBearFVG.length>0 ? '#ff1744' : '#5a8aa8',
-    });
-  }
-  // 流動性掃蕩
-  if (smcAn.lastSweep) {
-    rowData.push({
-      icon: '🌊',
-      label: `流動性掃蕩（${smcAn.lastSweep.type==='bullish'?'掃低後反彈':'掃高後回落'}）`,
-      value: `@ ${smcAn.lastSweep.level.toFixed(2)}`,
-      color: smcAn.lastSweep.type==='bullish' ? '#ce93d8' : '#ff9800',
-    });
-  }
-  // Order Block
-  if (smcAn.nearBullOB) rowData.push({ icon:'📦', label:'多頭訂單塊支撐（OB）', value:`${smcAn.nearBullOB.bot.toFixed(2)}–${smcAn.nearBullOB.top.toFixed(2)}`, color:'#00d4ff' });
-  if (smcAn.nearBearOB) rowData.push({ icon:'📦', label:'空頭訂單塊壓力（OB）', value:`${smcAn.nearBearOB.bot.toFixed(2)}–${smcAn.nearBearOB.top.toFixed(2)}`, color:'#ff9800' });
-  // OTE
-  if (smcAn.inOTE) rowData.push({ icon:'🎯', label:'OTE最佳入場區 (61.8%–70.5%)', value:`${smcAn.oteBot.toFixed(2)}–${smcAn.oteTop.toFixed(2)}`, color:'#ffab00' });
-
-  // 詳細訊號
-  smcAn.smcDetails.forEach(d => rowData.push({ icon:'', label:d, value:'', color:'#9ec5d8', small:true }));
-
-  rows.innerHTML = rowData.length === 0
-    ? '<div style="font-size:.62rem;color:#3a6078;padding:4px 0">無明顯ICT/SMC結構信號</div>'
-    : rowData.map(r => `
-      <div style="display:flex;align-items:flex-start;gap:5px;padding:3px 0;border-bottom:1px solid rgba(14,31,51,.7)">
-        ${r.icon ? `<span style="font-size:.68rem;line-height:1.5;flex-shrink:0">${r.icon}</span>` : '<span style="width:14px;flex-shrink:0"></span>'}
-        <span style="font-size:${r.small?'.6':'.64'}rem;color:#5a8aa8;flex:1;line-height:1.45">${r.label}</span>
-        ${r.value ? `<span style="font-size:.64rem;color:${r.color};font-weight:700;white-space:nowrap;margin-left:4px">${r.value}</span>` : ''}
-      </div>`).join('');
-}
-
 
 // ══════════════════════════════════════════════════════════════════
 // 🌏 Module A: 南北向資金分析（港股南向 / 陸股北向）
